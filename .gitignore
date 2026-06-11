@@ -1,0 +1,85 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  .gitignore RACINE — recrutement_stagiare/
+#  Couvre backend/ + frontend/ + tout le projet
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Java / Maven ──────────────────────────────────────────────────────────────
+target/
+*.jar
+*.class
+.mvn/wrapper/maven-wrapper.jar
+HELP.md
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache
+.apt_generated
+.factorypath
+
+# ── Node / React ──────────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+.vite/
+*.local
+.next/
+.nuxt/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Venv (toutes conventions)
+venv/
+.venv/
+env/
+.env/
+backend/src/main/resources/python/venv/
+
+# Secrets
+.env
+backend/src/main/resources/python/.env
+
+# Modèles ML (trop lourds — recréés via requirements.txt + téléchargement)
+backend/src/main/resources/python/models/
+backend/src/main/resources/python/models.bert_bct/
+backend/src/main/resources/python/checkpoints/
+backend/src/main/resources/python/checkpoints.model.eval/
+
+# Base vectorielle ChromaDB (données runtime, pas du code)
+backend/src/main/resources/python/chroma_cv/
+
+# Logs
+*.log
+backend/src/main/resources/python/audit_face.log
+
+# Données d'entraînement (pas nécessaires au runtime)
+backend/src/main/resources/python/pairs_bct.csv
+
+# ── Spring Boot secrets ───────────────────────────────────────────────────────
+# application.properties EST sur Git (avec ${VARIABLE})
+# mais on exclut les fichiers de secrets locaux
+application-local.properties
+application-local.yml
+application-secrets.properties
+
+# ── Uploads (données utilisateur, pas du code) ────────────────────────────────
+backend/uploads/
+
+# ── Système ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.bak

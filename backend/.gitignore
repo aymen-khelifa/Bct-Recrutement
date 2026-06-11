@@ -1,0 +1,85 @@
+# ── Maven / Java ──────────────────────────────────────────────────────────────
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ── Config IDE ────────────────────────────────────────────────────────────────
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+# ── Spring Boot config (secrets) ─────────────────────────────────────────────
+# On garde application.properties (avec ${VARIABLE}) mais on exclut les fichiers locaux
+application-local.properties
+application-local.yml
+application-secrets.properties
+
+# ── Node / React ──────────────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Venv (plusieurs conventions de nommage)
+venv/
+.venv/
+env/
+.env/
+backend/src/main/resources/python/venv/
+
+# Secrets Python
+backend/src/main/resources/python/.env
+
+# Modèles ML (trop lourds pour Git)
+backend/src/main/resources/python/models/
+backend/src/main/resources/python/models.bert_bct/
+backend/src/main/resources/python/checkpoints/
+backend/src/main/resources/python/checkpoints.model.eval/
+
+# Base vectorielle ChromaDB (données, pas du code)
+backend/src/main/resources/python/chroma_cv/
+
+# Logs Python
+backend/src/main/resources/python/*.log
+audit_face.log
+
+# ── Fichiers système ──────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
