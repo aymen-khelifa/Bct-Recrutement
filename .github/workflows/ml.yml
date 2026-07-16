@@ -21,15 +21,31 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Dependencies
+      - name: Install Dependencies (validation only)
         run: |
           cd backend/src/main/resources/python
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt --dry-run
+
+      - name: Prepare deployment package
+        run: |
+          cd backend/src/main/resources/python
+          # Exclure venv, __pycache__, modèles lourds (uploadés manuellement via Kudu)
+          zip -r ../../../../../ml_deploy.zip . \
+            --exclude "venv/*" \
+            --exclude "__pycache__/*" \
+            --exclude "*.pyc" \
+            --exclude "*.pyo" \
+            --exclude "audit_face.log" \
+            --exclude "models/*" \
+            --exclude "chroma_cv/*" \
+            --exclude "pairs_bct.csv"
+          echo "Package size: $(du -sh ../../../../../ml_deploy.zip)"
 
       - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_ML_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_ML_WEBAPP_PUBLISH_PROFILE }}
-          package: 'backend/src/main/resources/python'
+          package: 'ml_deploy.zip'
+          startup-command: 'gunicorn --bind=0.0.0.0:8000 --timeout=600 --workers=1 --threads=4 --preload app:app'
