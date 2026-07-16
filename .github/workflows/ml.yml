@@ -27,10 +27,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install --dry-run -r requirements.txt 2>&1 | tail -5
 
+      - name: Create startup script
+        run: |
+          cd backend/src/main/resources/python
+          cat > startup.sh << 'EOF'
+          #!/bin/bash
+          mkdir -p /home/site/wwwroot/models
+          mkdir -p /home/site/wwwroot/chroma_cv
+          pip install -r /home/site/wwwroot/requirements.txt
+          gunicorn --bind=0.0.0.0:8000 --timeout 600 --workers 1 ml_router:app
+          EOF
+          chmod +x startup.sh
+
       - name: Prepare deployment package
         run: |
           cd backend/src/main/resources/python
-          # Exclure venv, __pycache__, modèles lourds (uploadés manuellement via Kudu)
           zip -r ../../../../../ml_deploy.zip . \
             --exclude "venv/*" \
             --exclude "__pycache__/*" \
@@ -49,3 +60,8 @@ jobs:
           publish-profile: ${{ secrets.AZURE_ML_WEBAPP_PUBLISH_PROFILE }}
           package: 'ml_deploy.zip'
 
+      - name: Health check after deployment
+        run: |
+          sleep 30
+          curl -f https://${{ secrets.AZURE_ML_WEBAPP_NAME }}.azurewebsites.net/health \
+            || echo "Health check failed - check Azure logs"
