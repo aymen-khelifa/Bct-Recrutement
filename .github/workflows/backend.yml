@@ -42,9 +42,20 @@ jobs:
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: root
 
+      - name: Verify JAR integrity
+        run: |
+          JAR=backend/target/recrutement-0.0.1-SNAPSHOT.jar
+          echo "JAR size: $(du -sh $JAR)"
+          unzip -t $JAR > /dev/null && echo "JAR is valid" || (echo "JAR is CORRUPTED" && exit 1)
+
+      - name: Package JAR as ZIP for deployment
+        run: |
+          cd backend/target
+          zip deployment.zip recrutement-0.0.1-SNAPSHOT.jar
+
       - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: 'backend/target/recrutement-0.0.1-SNAPSHOT.jar'
+          package: 'backend/target/deployment.zip'
