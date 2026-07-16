@@ -3,7 +3,7 @@ import { AuthProvider } from './context/AuthProvider';
 import Layout from './components/CandidatLayout';
 import RHLayout from './components/RHlayout';
 import CandidatLayout from './components/CandidatLayout'; // ← nouveau
-import MesCandidatures from './pages/Candidat/Mescandidatures';
+import MesCandidatures from './pages/Candidat/Mescandidatures.jsx';
 import DetailCandidature from './pages/Candidat/Detailcandidature';
 import HomePage from './pages/Auth/HomePage';
 import Login from './pages/Auth/Login';
