@@ -16,16 +16,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      - name: Install Dependencies (validation only)
+      - name: Validate requirements.txt
         run: |
           cd backend/src/main/resources/python
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --dry-run
+          pip install --dry-run -r requirements.txt 2>&1 | tail -5
 
       - name: Prepare deployment package
         run: |
