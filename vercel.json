@@ -5,7 +5,7 @@
     "rewrites": [
         {
             "source": "/api/(.*)",
-            "destination": "https://recrutement-backend.azurewebsites.net/api/$1"
+            "destination": "https://recrutement-backend-a5g6cbfvbfcgh3g6.germanywestcentral-01.azurewebsites.net/api/$1"
         },
         {
             "source": "/(.*)",
