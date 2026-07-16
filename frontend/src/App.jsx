@@ -3,8 +3,8 @@ import { AuthProvider } from './context/AuthProvider';
 import Layout from './components/CandidatLayout';
 import RHLayout from './components/RHlayout';
 import CandidatLayout from './components/CandidatLayout'; // ← nouveau
-import MesCandidatures from './pages/Candidat/Mescandidatures.jsx';
-import DetailCandidature from './pages/Candidat/Detailcandidature';
+import MesCandidatures from './pages/Candidat/MesCandidatures_new.jsx';
+import DetailCandidature from './pages/Candidat/DetailCandidature_new.jsx';
 import HomePage from './pages/Auth/HomePage';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';

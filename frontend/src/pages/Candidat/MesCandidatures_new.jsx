@@ -255,25 +255,7 @@ const Mescandidatures = () => {
             </div>
           )}
 
-          {/* BENTO */}
-          <div className="mc-bento">
-            <div className="mc-bento-cta">
-              <span className="material-symbols-outlined mc-bento-icon">school</span>
-              <div style={{position:'relative',zIndex:1}}>
-                <h2>Préparez vos entretiens</h2>
-                <p>Accédez à nos ressources exclusives pour réussir vos étapes de recrutement au sein de la Banque Centrale.</p>
-                <button>Consulter le guide</button>
-              </div>
-            </div>
-            <div className="mc-bento-support">
-              <div className="mc-bento-support-icon">
-                <span className="material-symbols-outlined">support_agent</span>
-              </div>
-              <h3>Besoin d'aide ?</h3>
-              <p>Notre équipe recrutement est à votre disposition pour toute question.</p>
-              <a href="#">Contacter le support</a>
-            </div>
-          </div>
+        
 
         </main>
       </div>

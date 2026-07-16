@@ -120,7 +120,6 @@ const styles = `
 
 const formatBytes = (b) => b < 1024*1024 ? `${(b/1024).toFixed(0)} KB` : `${(b/(1024*1024)).toFixed(1)} MB`;
 
-// ✅ CORRIGÉ — extrait le nom depuis URL Cloudinary complète
 const cvFileName = (url) => {
   if (!url) return '';
   try {
@@ -255,7 +254,6 @@ const MonProfil = () => {
   };
 
   const closePopup = () => {
-    // Libérer la mémoire du blob URL
     if (popup?.viewUrl && popup.viewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(popup.viewUrl);
     }
@@ -267,12 +265,36 @@ const MonProfil = () => {
   const handleUserChange   = (e) => { const {name,value}=e.target; setUserForm(f=>({...f,[name]:value})); clrErr(name); };
   const handleProfilChange = (e) => { const {name,value}=e.target; setProfil(f=>({...f,[name]:value})); clrErr(name); };
 
-  const handlePhoto = (file) => {
+  // ── Compression image avant upload (800px max, JPEG 82%) ────────────────
+  const compressImage = (file, maxPx = 800, quality = 0.82) =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxPx) {
+          height = Math.round((height / width) * maxPx); width = maxPx;
+        } else if (height > maxPx) {
+          width = Math.round((width / height) * maxPx); height = maxPx;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })),
+          'image/jpeg', quality
+        );
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+  const handlePhoto = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) { showToast('Format image non accepté','error'); return; }
     if (file.size > 3*1024*1024)         { showToast('Image trop lourde (max 3 MB)','error'); return; }
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
+    // Compresser avant envoi → upload x10 plus rapide
+    const compressed = await compressImage(file);
+    setPhotoFile(compressed);
+    setPhotoPreview(URL.createObjectURL(compressed));
   };
 
   const handleCvFile = (file) => {
@@ -372,10 +394,8 @@ const MonProfil = () => {
     }
   };
 
-  // ── Variables calculées ──
   const initiales     = (user.name?.[0] || '?').toUpperCase();
   const rawPhoto      = user.photoUrl || user.photo_url || '';
-  // ✅ CORRIGÉ — URL Cloudinary directe, plus de manipulation de chemin
   const avatarSrc     = photoPreview || rawPhoto || null;
   const hasCv         = cvFile || cvExistant;
   const cvDisplayName = cvFile ? cvFile.name : cvFileName(cvExistant);
@@ -387,7 +407,6 @@ const MonProfil = () => {
       <style>{styles}</style>
       <div className="mp-root">
 
-        {/* ── POPUP CV ── */}
         {popup && (
           <div className="mp-popup-overlay" onClick={closePopup}>
             <div className="mp-popup" onClick={e => e.stopPropagation()}>
@@ -411,7 +430,6 @@ const MonProfil = () => {
                       Chargement du document...
                     </div>
                   ) : popup.viewUrl ? (
-                    // Blob URL créé depuis le proxy → iframe sans CORS ni X-Frame-Options
                     <iframe src={popup.viewUrl} title={popup.name} />
                   ) : (
                     <div className="mp-popup-no-preview">

@@ -23,6 +23,11 @@ const styles = `
   --org:#d97706;--org-bg:#fffbeb;
   --r:.875rem;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,61,122,.06);
 }
+  .qz-face-card-header-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 body{font-family:'Public Sans',sans-serif;background:var(--bg);color:var(--tx);}
 .qz-page{user-select:none;-webkit-user-select:none;}
 .ms{font-family:'Material Symbols Outlined';font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle;font-size:1.25rem;font-style:normal;line-height:1;}
@@ -124,30 +129,38 @@ body{font-family:'Public Sans',sans-serif;background:var(--bg);color:var(--tx);}
 .qz-info p{font-size:.6875rem;color:rgba(168,200,255,.75);line-height:1.65;}
 .qz-btn-flag{width:100%;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.875rem;background:var(--surf);border:1px solid var(--brd);border-radius:.625rem;font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--tx2);cursor:pointer;font-family:'Public Sans',sans-serif;transition:all .15s;}
 .qz-btn-flag:hover,.qz-btn-flag.on{border-color:var(--red);color:var(--red);background:var(--red-bg);}
-.qz-face-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:2rem;}
-.qz-face-card{background:var(--surf);border:1px solid var(--brd);border-radius:1.25rem;width:100%;max-width:36rem;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,.12);}
-.qz-face-card-header{background:linear-gradient(135deg,#1e0a3c,#2d1060);padding:2rem;color:#fff;}
-.qz-face-card-header-icon{width:3rem;height:3rem;background:rgba(124,58,237,.3);border:1px solid rgba(124,58,237,.5);border-radius:.875rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;}
-.qz-face-card-header-icon .ms{font-size:1.5rem;color:#c4b5fd;}
+
+/* ── FaceCheckScreen : popup fixe + dark BCT ────────────────────── */
+.qz-face-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,.92);padding:1rem;}
+.qz-face-card{background:#0f172a;border:1px solid #1e293b;border-radius:1.25rem;width:100%;max-width:36rem;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,.55);max-height:92vh;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;}
+.qz-face-card::-webkit-scrollbar{display:none}
+.qz-face-card-header{background:linear-gradient(135deg,#001529,#003d7a);padding:1.5rem;color:#fff;}
+.qz-face-card-header-icon{width:3rem;height:3rem;background:rgba(0,61,122,.4);border:1px solid rgba(0,100,200,.5);border-radius:.875rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;}
+.qz-face-card-header-icon .ms{font-size:1.5rem;color:#93c5fd;}
 .qz-face-card-header h2{font-size:1.25rem;font-weight:900;margin-bottom:.375rem;}
 .qz-face-card-header p{font-size:.875rem;color:rgba(255,255,255,.65);}
-.qz-face-card-body{padding:1.5rem;}
-.qz-face-video-wrap{position:relative;background:#000;border-radius:.75rem;overflow:hidden;margin-bottom:1.25rem;border:2px solid var(--brd);}
+.qz-face-card-body{padding:1.5rem;background:#0f172a;}
+.qz-face-video-wrap{position:relative;background:#000;border-radius:.75rem;overflow:hidden;margin-bottom:1.25rem;border:2px solid #1e3a5f;}
 .qz-face-video-wrap video{width:100%;display:block;}
 .qz-face-video-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
 .qz-face-status{display:flex;align-items:center;gap:.75rem;padding:.875rem 1rem;border-radius:.75rem;margin-bottom:1rem;font-size:.8125rem;font-weight:600;}
-.qz-face-status.idle{background:#f8fafc;border:1px solid var(--brd);color:var(--tx2);}
-.qz-face-status.ok{background:var(--grn-bg);border:1px solid rgba(5,150,105,.3);color:var(--grn);}
-.qz-face-status.err{background:var(--red-bg);border:1px solid rgba(239,68,68,.3);color:var(--red);}
-.qz-face-status.loading{background:#eff6ff;border:1px solid #bfdbfe;color:#2563eb;}
+.qz-face-status.idle{background:#0a1628;border:1px solid #1e293b;color:#64748b;}
+.qz-face-status.ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);color:#4ade80;}
+.qz-face-status.err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#f87171;}
+.qz-face-status.loading{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);color:#60a5fa;}
 .qz-face-attempts{display:flex;gap:.375rem;margin-bottom:1.25rem;}
-.qz-face-attempt-dot{flex:1;height:.5rem;border-radius:9999px;background:var(--bg);border:1.5px solid var(--brd);transition:all .2s;}
+.qz-face-attempt-dot{flex:1;height:.5rem;border-radius:9999px;background:#1e293b;border:1.5px solid #1e293b;transition:all .2s;}
 .qz-face-attempt-dot.used{background:var(--red);border-color:var(--red);}
-.qz-face-card-footer{padding:1rem 1.5rem;border-top:1px solid var(--brd);display:flex;gap:.75rem;}
-.qz-face-btn-verify{flex:1;padding:.75rem;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:.625rem;font-size:.9375rem;font-weight:800;cursor:pointer;font-family:'Public Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all .2s;}
-.qz-face-btn-verify:disabled{opacity:.5;cursor:not-allowed;}
-.qz-face-cam-denied{display:flex;flex-direction:column;align-items:center;padding:2rem;background:#1e293b;border-radius:.75rem;color:#fff;gap:1rem;text-align:center;}
+.qz-face-card-footer{padding:1rem 1.5rem;border-top:1px solid #1e293b;display:flex;flex-direction:column;gap:.625rem;background:#0f172a;}
+.qz-face-btn-verify{flex:1;padding:.875rem;background:#003d7a;color:#fff;border:none;border-radius:.625rem;font-size:.9375rem;font-weight:800;cursor:pointer;font-family:'Public Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all .2s;}
+.qz-face-btn-verify:hover{background:#002b57;}
+.qz-face-btn-verify:disabled{opacity:.4;cursor:not-allowed;}
+.qz-face-btn-back{width:100%;padding:.625rem;background:transparent;border:1px solid #1e293b;border-radius:.625rem;font-size:.8125rem;font-weight:700;color:#475569;cursor:pointer;font-family:'Public Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:.375rem;transition:border-color .2s,color .2s;}
+.qz-face-btn-back:hover{border-color:#334155;color:#94a3b8;}
+.qz-face-cam-denied{display:flex;flex-direction:column;align-items:center;padding:2rem;background:#0a1628;border:1px solid rgba(239,68,68,.25);border-radius:.75rem;color:#fff;gap:1rem;text-align:center;}
 .qz-face-cam-denied .ms{font-size:3rem;color:#ef4444;}
+/* ────────────────────────────────────────────────────────────────── */
+
 .qz-full{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;gap:1.5rem;background:var(--bg);}
 .qz-fi{font-size:4rem!important;} .qz-fi.gr{color:var(--grn);} .qz-fi.rd{color:var(--red);} .qz-fi.bl{color:var(--pr);}
 .qz-ftitle{font-size:2rem;font-weight:900;text-transform:uppercase;letter-spacing:-.03em;color:var(--tx);}
@@ -186,7 +199,6 @@ const Pips = ({ count, max }) => (
   </span>
 );
 
-// ── ✅ NOUVEAU : Lightbox image plein écran ──────────────────────────────────
 const Lightbox = ({ src, onClose }) => {
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -195,40 +207,13 @@ const Lightbox = ({ src, onClose }) => {
   }, [onClose]);
   if (!src) return null;
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position:'fixed',inset:0,zIndex:99998,
-        background:'rgba(15,23,42,.95)',
-        display:'flex',alignItems:'center',justifyContent:'center',
-        padding:'2rem',backdropFilter:'blur(6px)',cursor:'zoom-out',
-      }}
-    >
+    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:99998,background:'rgba(15,23,42,.95)',display:'flex',alignItems:'center',justifyContent:'center',padding:'2rem',backdropFilter:'blur(6px)',cursor:'zoom-out'}}>
       <div onClick={e=>e.stopPropagation()} style={{position:'relative',maxWidth:'90vw',maxHeight:'90vh'}}>
-        <img
-          src={src} alt="Aperçu"
-          style={{
-            maxWidth:'90vw',maxHeight:'85vh',
-            borderRadius:'1rem',objectFit:'contain',
-            boxShadow:'0 25px 60px rgba(0,0,0,.5)',
-            display:'block',
-          }}
-        />
-        <button
-          onClick={onClose}
-          style={{
-            position:'absolute',top:'-1rem',right:'-1rem',
-            width:'2.25rem',height:'2.25rem',borderRadius:'50%',
-            background:'#fff',border:'none',cursor:'pointer',
-            display:'flex',alignItems:'center',justifyContent:'center',
-            boxShadow:'0 4px 12px rgba(0,0,0,.3)',
-          }}
-        >
+        <img src={src} alt="Aperçu" style={{maxWidth:'90vw',maxHeight:'85vh',borderRadius:'1rem',objectFit:'contain',boxShadow:'0 25px 60px rgba(0,0,0,.5)',display:'block'}}/>
+        <button onClick={onClose} style={{position:'absolute',top:'-1rem',right:'-1rem',width:'2.25rem',height:'2.25rem',borderRadius:'50%',background:'#fff',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 12px rgba(0,0,0,.3)'}}>
           <i className="ms" style={{fontSize:'1.125rem',verticalAlign:'middle'}}>close</i>
         </button>
-        <p style={{textAlign:'center',marginTop:'.75rem',fontSize:'.75rem',color:'rgba(255,255,255,.5)',fontWeight:600}}>
-          Appuyez sur Échap ou cliquez en dehors pour fermer
-        </p>
+        <p style={{textAlign:'center',marginTop:'.75rem',fontSize:'.75rem',color:'rgba(255,255,255,.5)',fontWeight:600}}>Appuyez sur Échap ou cliquez en dehors pour fermer</p>
       </div>
     </div>
   );
@@ -266,10 +251,7 @@ const useFullscreen = (active) => {
   useEffect(() => {
     if (!active) return;
     allowExitFs.current = false;
-    const onFsChange = () => {
-      const isFull = !!document.fullscreenElement;
-      setIsFullscreen(isFull);
-    };
+    const onFsChange = () => { const isFull = !!document.fullscreenElement; setIsFullscreen(isFull); };
     document.addEventListener('fullscreenchange', onFsChange);
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, [active]);
@@ -277,12 +259,7 @@ const useFullscreen = (active) => {
   useEffect(() => {
     if (!active) return;
     const blockKeys = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault(); e.stopPropagation();
-        clearTimeout(fsRetryRef.current);
-        fsRetryRef.current = setTimeout(() => enterFullscreen(), 150);
-        return false;
-      }
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); clearTimeout(fsRetryRef.current); fsRetryRef.current = setTimeout(() => enterFullscreen(), 150); return false; }
       if (e.key === 'F5') { e.preventDefault(); e.stopPropagation(); return false; }
       if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) { e.preventDefault(); e.stopPropagation(); return false; }
       if (e.key === 'F11') { e.preventDefault(); e.stopPropagation(); return false; }
@@ -297,11 +274,7 @@ const useFullscreen = (active) => {
 
   useEffect(() => {
     if (!active) return;
-    const onBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = 'Le quiz est en cours. Si vous quittez, vos réponses seront perdues.';
-      return e.returnValue;
-    };
+    const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = 'Le quiz est en cours. Si vous quittez, vos réponses seront perdues.'; return e.returnValue; };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [active]);
@@ -310,9 +283,9 @@ const useFullscreen = (active) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  FaceCheckScreen
+//  FaceCheckScreen — + prop onBack + bouton Retour dans le footer
 // ─────────────────────────────────────────────────────────────────────────────
-const FaceCheckScreen = ({ userId, sujetId, onVerified }) => {
+const FaceCheckScreen = ({ userId, sujetId, onVerified, onBack }) => {
   const videoRef   = useRef(null);
   const canvasRef  = useRef(null);
   const streamRef  = useRef(null);
@@ -379,14 +352,14 @@ const FaceCheckScreen = ({ userId, sujetId, onVerified }) => {
     if (!localCheck.ok) { setFaceStatus('err'); setFaceMsg(`❌ ${localCheck.reason}`); return; }
     const webcamImage = captureFrame();
     if (!webcamImage) { setFaceStatus('err'); setFaceMsg('Impossible de capturer une image.'); return; }
-    setVerifying(true); setFaceStatus('loading'); setFaceMsg('Vérification ArcFace en cours...');
+    setVerifying(true); setFaceStatus('loading'); setFaceMsg('Vérification en cours...');
     try {
       const res = await axios.post(`/api/face/verify/${sujetId}`, { candidateId: userId, webcamImage }, { validateStatus: () => true });
       const data = res.data || {}, status = res.status;
       if (data.attemptsLeft !== undefined) setAttempts(MAX_ATTEMPTS - data.attemptsLeft);
       if (status === 429 || data.blocked) { setBlocked(true); setFaceStatus('err'); setFaceMsg('🔒 Session bloquée — 5 tentatives épuisées. Contactez l\'équipe RH.'); return; }
       if (data.verified) {
-        setFaceStatus('ok'); setFaceMsg(`✅ Identité vérifiée — confiance ${Math.round(data.confidence ?? 0)}%`);
+        setFaceStatus('ok'); setFaceMsg('✅ Identité vérifiée ');
         setTimeout(() => onVerified(), 1500); return;
       }
       const left = data.attemptsLeft ?? (MAX_ATTEMPTS - (MAX_ATTEMPTS - attempts) - 1);
@@ -404,21 +377,45 @@ const FaceCheckScreen = ({ userId, sujetId, onVerified }) => {
     } finally { setVerifying(false); }
   };
 
+  // ── Caméra refusée ────────────────────────────────────────────────
   if (camStatus === 'denied') return (
     <div className="qz-face-screen"><div className="qz-face-card">
-      <div className="qz-face-card-header"><div className="qz-face-card-header-icon"><Icon name="videocam_off"/></div><h2>Caméra requise</h2><p>L'accès à la caméra est obligatoire pour passer le quiz.</p></div>
-      <div className="qz-face-card-body"><div className="qz-face-cam-denied"><Icon name="no_photography"/><p style={{fontWeight:700,fontSize:'1rem'}}>Accès caméra refusé</p><p style={{fontSize:'.875rem',color:'rgba(255,255,255,.7)',lineHeight:1.6}}>Autorisez la caméra dans les paramètres de votre navigateur puis actualisez.</p><button onClick={() => window.location.reload()} style={{padding:'.625rem 1.5rem',background:'#fff',color:'#003d7a',border:'none',borderRadius:'.5rem',fontWeight:700,cursor:'pointer',fontFamily:'Public Sans,sans-serif'}}>Réessayer</button></div></div>
+      <div className="qz-face-card-header">
+        <div className="qz-face-card-header-icon"><Icon name="videocam_off"/></div>
+        <h2>Caméra requise</h2>
+        <p>L'accès à la caméra est obligatoire pour passer le quiz.</p>
+      </div>
+      <div className="qz-face-card-body">
+        <div className="qz-face-cam-denied">
+          <Icon name="no_photography"/>
+          <p style={{fontWeight:700,fontSize:'1rem'}}>Accès caméra refusé</p>
+          <p style={{fontSize:'.875rem',color:'rgba(255,255,255,.7)',lineHeight:1.6}}>Autorisez la caméra dans les paramètres de votre navigateur puis actualisez.</p>
+          <button onClick={() => window.location.reload()} style={{padding:'.625rem 1.5rem',background:'#003d7a',color:'#fff',border:'none',borderRadius:'.5rem',fontWeight:700,cursor:'pointer',fontFamily:'Public Sans,sans-serif'}}>Réessayer</button>
+        </div>
+      </div>
+      {/* ── Bouton Retour ── */}
+      <div className="qz-face-card-footer">
+        {onBack && <button className="qz-face-btn-back" onClick={onBack}><Icon name="arrow_back" style={{fontSize:'1rem'}}/>Retour</button>}
+      </div>
     </div></div>
   );
 
   const attemptsLeft = MAX_ATTEMPTS - attempts;
+
+  // ── Écran principal ───────────────────────────────────────────────
   return (
     <div className="qz-face-screen"><div className="qz-face-card">
-      <div className="qz-face-card-header"><div className="qz-face-card-header-icon"><Icon name="face"/></div><h2>Vérification d'identité</h2><p>Avant de commencer le quiz, vérifiez votre identité via votre caméra.</p></div>
+   <div className="qz-face-card-header">
+  <div className="qz-face-card-header-icon-title">
+    <div className="qz-face-card-header-icon"><Icon name="face"/></div>
+    <h2>Vérification d'identité</h2>
+  </div>
+  <p>Avant de commencer le quiz, vérifiez votre identité via votre caméra.</p>
+</div>
       <div className="qz-face-card-body">
         {camStatus === 'requesting' ? (
-          <div style={{display:'flex',alignItems:'center',justifyContent:'center',padding:'3rem',background:'#f8fafc',borderRadius:'.75rem',marginBottom:'1.25rem',flexDirection:'column',gap:'1rem',color:'#64748b'}}>
-            <Icon name="progress_activity" className="qz-spin"/><p style={{fontSize:'.875rem'}}>Ouverture de la caméra...</p>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',padding:'3rem',background:'#0a1628',borderRadius:'.75rem',marginBottom:'1.25rem',flexDirection:'column',gap:'1rem',color:'#64748b'}}>
+            <Icon name="progress_activity" className="qz-spin" style={{color:'#3b82f6'}}/><p style={{fontSize:'.875rem'}}>Ouverture de la caméra...</p>
           </div>
         ) : (
           <div className="qz-face-video-wrap" style={{marginBottom:'1.25rem'}}>
@@ -432,10 +429,10 @@ const FaceCheckScreen = ({ userId, sujetId, onVerified }) => {
         </div>
         <div style={{marginBottom:'1.25rem'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'.5rem'}}>
-            <p style={{fontSize:'.6875rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color: attemptsLeft <= 1 ? '#ef4444' : '#94a3b8'}}>
+            <p style={{fontSize:'.6875rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color: attemptsLeft <= 1 ? '#ef4444' : '#475569'}}>
               {attemptsLeft > 0 ? `${attemptsLeft} tentative${attemptsLeft > 1 ? 's' : ''} restante${attemptsLeft > 1 ? 's' : ''}` : 'Aucune tentative restante'}
             </p>
-            <p style={{fontSize:'.6875rem',color:'#94a3b8'}}>{attempts}/{MAX_ATTEMPTS} utilisée{attempts > 1 ? 's' : ''}</p>
+            <p style={{fontSize:'.6875rem',color:'#475569'}}>{attempts}/{MAX_ATTEMPTS} utilisée{attempts > 1 ? 's' : ''}</p>
           </div>
           <div className="qz-face-attempts">
             {Array.from({length:MAX_ATTEMPTS}).map((_,i) => (
@@ -443,13 +440,16 @@ const FaceCheckScreen = ({ userId, sujetId, onVerified }) => {
             ))}
           </div>
         </div>
-        {!blocked && (<div style={{display:'flex',alignItems:'center',gap:'.5rem',padding:'.625rem .875rem',background:'#f8fafc',borderRadius:'.625rem',marginBottom:'.75rem',fontSize:'.6875rem',color:'var(--txd)'}}><Icon name="info" style={{fontSize:'1rem',color:'var(--pr)'}}/><span>Si votre visage n'est pas détecté au clic, aucune tentative n'est consommée.</span></div>)}
-        {blocked && (<div className="qz-err" style={{marginBottom:'1rem'}}><Icon name="block"/>Session bloquée — 5 tentatives épuisées. Contactez l'équipe RH.</div>)}
+        {!blocked && (<div style={{display:'flex',alignItems:'center',gap:'.5rem',padding:'.625rem .875rem',background:'#0a1628',border:'1px solid #1e293b',borderRadius:'.625rem',marginBottom:'.75rem',fontSize:'.6875rem',color:'#475569'}}><Icon name="info" style={{fontSize:'1rem',color:'#3b82f6'}}/><span>Si votre visage n'est pas détecté au clic, aucune tentative n'est consommée.</span></div>)}
+        {blocked && (<div className="qz-err" style={{marginBottom:'1rem',background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.25)',color:'#f87171'}}><Icon name="block"/>Session bloquée — 5 tentatives épuisées. Contactez l'équipe RH.</div>)}
+        
       </div>
+      {/* ── Footer : vérifier + retour ── */}
       <div className="qz-face-card-footer">
         <button className="qz-face-btn-verify" onClick={handleVerify} disabled={verifying || blocked || camStatus !== 'ok' || attempts >= MAX_ATTEMPTS}>
-          {verifying ? <><Icon name="progress_activity" className="qz-spin" style={{fontSize:'1rem',marginRight:'.25rem'}}/>Vérification...</> : <><Icon name="face"/>Vérifier mon identité</>}
+          {verifying ? <><Icon name="progress_activity" className="qz-spin" style={{fontSize:'1rem',marginRight:'.25rem',color:'#fff'}}/>Vérification...</> : <><Icon name="face"/>Vérifier mon identité</>}
         </button>
+        {onBack && <button className="qz-face-btn-back" onClick={onBack}><Icon name="arrow_back" style={{fontSize:'1rem'}}/>Retour</button>}
       </div>
     </div></div>
   );
@@ -470,78 +470,36 @@ const useScreenRecorder = ({ userId, quizId, candidatureId, onScreenStopped }) =
 
   const startRecording = useCallback(async () => {
     try {
-      setUploadError(null);
-      chunksRef.current = [];
-
+      setUploadError(null); chunksRef.current = [];
       let screenStream;
       try {
-        screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: { mediaSource: 'screen', width: 1920, height: 1080, frameRate: 15 },
-          audio: true,
-        });
-      } catch(e) {
-        console.warn('[Recorder] Partage écran refusé:', e.message);
-        return { refused: true };
-      }
-
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { mediaSource: 'screen', width: 1920, height: 1080, frameRate: 15 }, audio: true });
+      } catch(e) { console.warn('[Recorder] Partage écran refusé:', e.message); return { refused: true }; }
       screenStreamRef.current = screenStream;
-
-      screenStream.getVideoTracks()[0].onended = () => {
-        console.warn('[Recorder] Partage écran arrêté par le candidat → quiz terminé');
-        setIsRecording(false);
-        if (onScreenStopped) onScreenStopped();
-      };
-
-      let finalStream = screenStream;
-
+      screenStream.getVideoTracks()[0].onended = () => { console.warn('[Recorder] Partage écran arrêté'); setIsRecording(false); if (onScreenStopped) onScreenStopped(); };
       const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm';
-      const recorder = new MediaRecorder(finalStream, { mimeType, videoBitsPerSecond: 1_500_000 });
+      const recorder = new MediaRecorder(screenStream, { mimeType, videoBitsPerSecond: 1_500_000 });
       recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
-
-      mediaRecorderRef.current = recorder;
-      recorder.start(5000);
-      setIsRecording(true);
+      mediaRecorderRef.current = recorder; recorder.start(5000); setIsRecording(true);
       console.log('[Recorder] ✅ Enregistrement démarré');
-
       const partialUploadInterval = setInterval(async () => {
-        if (chunksRef.current.length === 0) return;
-        if (mediaRecorderRef.current?.state !== 'recording') return;
-        const currentChunks = [...chunksRef.current];
-        chunksRef.current = [];
+        if (chunksRef.current.length === 0 || mediaRecorderRef.current?.state !== 'recording') return;
+        const currentChunks = [...chunksRef.current]; chunksRef.current = [];
         const blob = new Blob(currentChunks, { type: 'video/webm' });
         if (blob.size < 50000) return;
-        const _uid = _userIdRef.current;
-        const _qid = _quizIdRef.current;
-        const _cid = _candidatureIdRef.current;
+        const _uid = _userIdRef.current, _qid = _quizIdRef.current, _cid = _candidatureIdRef.current;
         if (!_uid || !_qid) return;
-        console.log(`[Recorder] Upload partiel ${(blob.size/1024/1024).toFixed(1)}MB...`);
         try {
           const formData = new FormData();
           formData.append('video', blob, `quiz_${_qid}_${_uid}_partial_${Date.now()}.webm`);
-          formData.append('userId', String(_uid));
-          formData.append('quizId', String(_qid));
+          formData.append('userId', String(_uid)); formData.append('quizId', String(_qid));
           if (_cid) formData.append('candidatureId', String(_cid));
-          await axios.post('/api/recording/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-            timeout: 60_000,
-          });
-          console.log('[Recorder] ✅ Upload partiel ok');
-        } catch(e) {
-          chunksRef.current = [...currentChunks, ...chunksRef.current];
-          console.warn('[Recorder] Upload partiel échoué:', e.message);
-        }
+          await axios.post('/api/recording/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 60_000 });
+        } catch(e) { chunksRef.current = [...currentChunks, ...chunksRef.current]; console.warn('[Recorder] Upload partiel échoué:', e.message); }
       }, 30_000);
-
       screenStreamRef._partialInterval = partialUploadInterval;
-
       return { refused: false };
-
-    } catch(e) {
-      console.warn('[Recorder] Erreur:', e.message);
-      setUploadError('Erreur enregistrement.');
-      setIsRecording(false);
-      return { refused: true };
-    }
+    } catch(e) { console.warn('[Recorder] Erreur:', e.message); setUploadError('Erreur enregistrement.'); setIsRecording(false); return { refused: true }; }
   }, [onScreenStopped]);
 
   const _candidatureIdRef = useRef(candidatureId);
@@ -555,37 +513,24 @@ const useScreenRecorder = ({ userId, quizId, candidatureId, onScreenStopped }) =
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') return;
     return new Promise((resolve) => {
       mediaRecorderRef.current.onstop = async () => {
-        if (screenStreamRef._partialInterval) {
-          clearInterval(screenStreamRef._partialInterval);
-          screenStreamRef._partialInterval = null;
-        }
+        if (screenStreamRef._partialInterval) { clearInterval(screenStreamRef._partialInterval); screenStreamRef._partialInterval = null; }
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         screenStreamRef.current?.getTracks().forEach(t => t.stop());
         setIsRecording(false);
         if (chunksRef.current.length === 0) { resolve(null); return; }
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        const _uid = _userIdRef.current;
-        const _qid = _quizIdRef.current;
-        const _cid = _candidatureIdRef.current;
+        const _uid = _userIdRef.current, _qid = _quizIdRef.current, _cid = _candidatureIdRef.current;
         console.log(`[Recorder] Blob ${(blob.size/1024/1024).toFixed(1)}MB — upload... candidatureId=${_cid}`);
         setIsUploading(true);
         try {
           const formData = new FormData();
           formData.append('video', blob, `quiz_${_qid}_${_uid}_${Date.now()}.webm`);
-          formData.append('userId', String(_uid));
-          formData.append('quizId', String(_qid));
+          formData.append('userId', String(_uid)); formData.append('quizId', String(_qid));
           if (_cid) formData.append('candidatureId', String(_cid));
           const { data } = await axios.post('/api/recording/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 300_000 });
-          console.log('[Recorder] ✅ Uploadé:', data.url);
-          resolve(data.url);
-        } catch(e) {
-          console.error('[Recorder] Erreur upload:', e.message);
-          setUploadError('Erreur upload vidéo.');
-          resolve(null);
-        } finally {
-          setIsUploading(false);
-          chunksRef.current = [];
-        }
+          console.log('[Recorder] ✅ Uploadé:', data.url); resolve(data.url);
+        } catch(e) { console.error('[Recorder] Erreur upload:', e.message); setUploadError('Erreur upload vidéo.'); resolve(null); }
+        finally { setIsUploading(false); chunksRef.current = []; }
       };
       mediaRecorderRef.current.stop();
     });
@@ -626,8 +571,7 @@ const computeDescriptor = async (imgSrc) => {
     el.onload = () => res(el); el.onerror = () => rej(new Error('Photo profil illisible'));
     el.src = imgSrc;
   });
-  const det = await fa.detectSingleFace(img, new fa.SsdMobilenetv1Options({ minConfidence: 0.5 }))
-    .withFaceLandmarks().withFaceDescriptor();
+  const det = await fa.detectSingleFace(img, new fa.SsdMobilenetv1Options({ minConfidence: 0.5 })).withFaceLandmarks().withFaceDescriptor();
   if (!det) throw new Error('Aucun visage dans la photo profil');
   return det.descriptor;
 };
@@ -636,8 +580,7 @@ const matchFace = async (videoEl, refDesc) => {
   const fa = window._faceapi;
   if (!fa || !videoEl || !videoEl.videoWidth) return { matched:false, distance:1, detected:false };
   try {
-    const det = await fa.detectSingleFace(videoEl, new fa.TinyFaceDetectorOptions({ inputSize:224, scoreThreshold:0.4 }))
-      .withFaceLandmarks().withFaceDescriptor();
+    const det = await fa.detectSingleFace(videoEl, new fa.TinyFaceDetectorOptions({ inputSize:224, scoreThreshold:0.4 })).withFaceLandmarks().withFaceDescriptor();
     if (!det) return { matched:false, distance:1, detected:false };
     const dist = fa.euclideanDistance(refDesc, det.descriptor);
     return { matched: dist < FACE_MATCH_THRESHOLD, distance: parseFloat(dist.toFixed(3)), detected:true };
@@ -659,22 +602,21 @@ const CandidatQuiz = () => {
   const SK = STORAGE_KEY(sujetId);
 
   const { error: faceApiError } = useFaceApi();
-
   const goBack = () => candidatureId ? navigate(`/candidat/candidatures/${candidatureId}`) : navigate('/candidat/candidatures');
 
-  const [phase,      setPhase]      = useState('loading');
-  const [quizId,     setQuizId]     = useState(null);
-  const [questions,  setQuestions]  = useState([]);
-  const [current,    setCurrent]    = useState(0);
-  const [timeLeft,   setTimeLeft]   = useState(30*60);
-  const [submitting, setSubmitting] = useState(false);
-  const [result,     setResult]     = useState(null);
-  const [toast,      setToast]      = useState(null);
-  const [tabExits,   setTabExits]   = useState(0);
-  const [showWarn,   setShowWarn]   = useState(false);
-  const [flagged,    setFlagged]    = useState(new Set());
-  const [errMsg,     setErrMsg]     = useState('');
-  const [ineligMsg,  setIneligMsg]  = useState('');
+  const [phase,           setPhase]           = useState('loading');
+  const [quizId,          setQuizId]          = useState(null);
+  const [questions,       setQuestions]       = useState([]);
+  const [current,         setCurrent]         = useState(0);
+  const [timeLeft,        setTimeLeft]        = useState(30*60);
+  const [submitting,      setSubmitting]      = useState(false);
+  const [result,          setResult]          = useState(null);
+  const [toast,           setToast]           = useState(null);
+  const [tabExits,        setTabExits]        = useState(0);
+  const [showWarn,        setShowWarn]        = useState(false);
+  const [flagged,         setFlagged]         = useState(new Set());
+  const [errMsg,          setErrMsg]          = useState('');
+  const [ineligMsg,       setIneligMsg]       = useState('');
   const [faceWarns,       setFaceWarns]       = useState(0);
   const [camOff,          setCamOff]          = useState(false);
   const [faceOk,          setFaceOk]          = useState(true);
@@ -683,40 +625,26 @@ const CandidatQuiz = () => {
   const [showFaceWarn,    setShowFaceWarn]    = useState(false);
   const [faceWarnMsg,     setFaceWarnMsg]     = useState('');
   const [descriptorReady, setDescriptorReady] = useState(false);
-  // ✅ NOUVEAU : state lightbox image question
   const [lightboxImg,     setLightboxImg]     = useState(null);
 
   const isQuizActive = phase === 'quiz';
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen(isQuizActive);
-
   const stopRecordingRef = useRef(null);
 
   const handleScreenStopped = useCallback(() => {
     if (submittedRef.current) return;
     submittedRef.current = true;
     showToast('⛔ Partage d\'écran arrêté — Session clôturée ! Score : 0', 'error');
-    setPhase('terminated');
-    clearInterval(timerRef.current);
-    stopFM();
-    exitFullscreen();
-    const _quizId = quizIdRef.current;
-    const _userId = userIdRef.current;
+    setPhase('terminated'); clearInterval(timerRef.current); stopFM(); exitFullscreen();
+    const _quizId = quizIdRef.current, _userId = userIdRef.current;
     if (_quizId && _userId) {
       sessionStorage.removeItem(STORAGE_KEY(sujetId));
-      axios.post(`/api/quiz/${_quizId}/submit`, {
-        userId:   _userId,
-        reponses: {},
-      }).catch(e => console.warn('[ScreenStopped] submit erreur:', e.message));
+      axios.post(`/api/quiz/${_quizId}/submit`, { userId: _userId, reponses: {} }).catch(e => console.warn('[ScreenStopped] submit erreur:', e.message));
     }
     stopRecordingRef.current?.().catch(() => {});
   }, [sujetId]);
 
-  const {
-    isRecording,
-    isUploading,
-    startRecording,
-    stopRecording,
-  } = useScreenRecorder({ userId, quizId, candidatureId, onScreenStopped: handleScreenStopped });
+  const { isRecording, isUploading, startRecording, stopRecording } = useScreenRecorder({ userId, quizId, candidatureId, onScreenStopped: handleScreenStopped });
   useEffect(() => { stopRecordingRef.current = stopRecording; }, [stopRecording]);
 
   const quizVideoRef     = useRef(null);
@@ -755,20 +683,9 @@ const CandidatQuiz = () => {
     const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = '⚠️ Si vous quittez, votre session sera clôturée et votre score sera 0.'; return e.returnValue; };
     const onUnload = () => {
       if (!submittedRef.current) {
-        const _quizId        = quizIdRef.current;
-        const _userId        = userIdRef.current;
-        const _candidatureId = candidatureIdRef.current;
+        const _quizId = quizIdRef.current, _userId = userIdRef.current, _candidatureId = candidatureIdRef.current;
         if (!_quizId || !_userId) return;
-        const body = JSON.stringify({
-          userId:        _userId,
-          reponses:      {},
-          forcedExit:    true,
-          candidatureId: _candidatureId,
-        });
-        navigator.sendBeacon(
-          `/api/quiz/${_quizId}/submit`,
-          new Blob([body], { type: 'application/json' })
-        );
+        navigator.sendBeacon(`/api/quiz/${_quizId}/submit`, new Blob([JSON.stringify({ userId:_userId, reponses:{}, forcedExit:true, candidatureId:_candidatureId })], { type: 'application/json' }));
       }
     };
     window.addEventListener('beforeunload', onBeforeUnload);
@@ -819,12 +736,9 @@ const CandidatQuiz = () => {
       if (recResult?.refused) {
         showToast('❌ Partage d\'écran obligatoire pour commencer le quiz.', 'error');
         setErrMsg('Le partage d\'écran est obligatoire pour passer le quiz. Veuillez l\'autoriser.');
-        setPhase('error');
-        return;
+        setPhase('error'); return;
       }
-      setPhase('quiz');
-      await enterFullscreen();
-      await startFM();
+      setPhase('quiz'); await enterFullscreen(); await startFM();
     } catch(e) {
       const msg=e.response?.data?.message||'Démarrage impossible.';
       if (msg.toLowerCase().includes('tentative')||msg.toLowerCase().includes('déjà')) { setIneligMsg(msg); setPhase('ineligible'); }
@@ -834,35 +748,19 @@ const CandidatQuiz = () => {
 
   const startFM = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 320, height: 240, facingMode: 'user' },
-        audio: false
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' }, audio: false });
+      quizStreamRef.current = stream; setCamOff(false); noMatchFramesRef.current = 0;
+      const attachVideo = () => new Promise((resolve) => {
+        const tryAttach = () => {
+          if (quizVideoRef.current) { quizVideoRef.current.srcObject = stream; quizVideoRef.current.play().then(resolve).catch(resolve); }
+          else setTimeout(tryAttach, 100);
+        };
+        tryAttach();
       });
-      quizStreamRef.current = stream;
-      setCamOff(false);
-      noMatchFramesRef.current = 0;
-      const attachVideo = () => {
-        return new Promise((resolve) => {
-          const tryAttach = () => {
-            if (quizVideoRef.current) {
-              quizVideoRef.current.srcObject = stream;
-              quizVideoRef.current.play().then(resolve).catch(resolve);
-            } else { setTimeout(tryAttach, 100); }
-          };
-          tryAttach();
-        });
-      };
       await attachVideo();
       loadDesc();
-      setTimeout(() => {
-        checkFace();
-        faceCheckTimer.current = setInterval(checkFace, FACE_CHECK_INTERVAL);
-      }, 5000);
-    } catch (error) {
-      console.error(error);
-      setCamOff(true);
-      showToast('⛔ Caméra désactivée — Session suspendue !', 'error');
-    }
+      setTimeout(() => { checkFace(); faceCheckTimer.current = setInterval(checkFace, FACE_CHECK_INTERVAL); }, 5000);
+    } catch (error) { console.error(error); setCamOff(true); showToast('⛔ Caméra désactivée — Session suspendue !', 'error'); }
   };
 
   const stopFM = () => {
@@ -886,10 +784,7 @@ const CandidatQuiz = () => {
   const checkFace = async () => {
     if (!quizStreamRef.current) return;
     const tracks=quizStreamRef.current.getVideoTracks();
-    if (!tracks.length||tracks[0].readyState!=='live') {
-      setCamOff(true); showToast('⛔ Caméra désactivée — Session suspendue !','error');
-      clearInterval(faceCheckTimer.current); return;
-    }
+    if (!tracks.length||tracks[0].readyState!=='live') { setCamOff(true); showToast('⛔ Caméra désactivée — Session suspendue !','error'); clearInterval(faceCheckTimer.current); return; }
     const v=quizVideoRef.current;
     if (!v||!v.videoWidth||!window._faceapi) return;
     if (referenceDescRef.current) {
@@ -924,8 +819,7 @@ const CandidatQuiz = () => {
     if(phase!=='quiz') return;
     timerRef.current=setInterval(()=>{
       setTimeLeft(t=>{
-        if(t<=1){ clearInterval(timerRef.current); stopFM(); exitFullscreen();
-          if(!submittedRef.current){submittedRef.current=true;doSubmit(true);} return 0; }
+        if(t<=1){ clearInterval(timerRef.current); stopFM(); exitFullscreen(); if(!submittedRef.current){submittedRef.current=true;doSubmit(true);} return 0; }
         return t-1;
       });
     },1000);
@@ -935,8 +829,7 @@ const CandidatQuiz = () => {
   const doSubmit = useCallback(async (auto=false)=>{
     if(submitting)return; setSubmitting(true); clearInterval(timerRef.current); stopFM(); exitFullscreen();
     try { await stopRecording(); } catch(e) { console.warn('[doSubmit] stopRecording:', e.message); }
-    let reps={};
-    reps=JSON.parse(sessionStorage.getItem(SK)||'{}');
+    const reps=JSON.parse(sessionStorage.getItem(SK)||'{}');
     try{
       const{data}=await axios.post(`/api/quiz/${quizId}/submit`,{userId,reponses:reps});
       clearRep(); setResult(data); setPhase('submitted');
@@ -959,15 +852,16 @@ const CandidatQuiz = () => {
   if(phase==='loading'||phase==='checking') return(<><style>{styles}</style><div className="qz-full"><Icon name="progress_activity" className="qz-spin qz-fi bl"/><p style={{color:'var(--tx2)',fontWeight:600}}>{phase==='checking'?'Vérification éligibilité...':'Chargement...'}</p></div></>);
   if(phase==='error') return(<><style>{styles}</style><div className="qz-full"><Icon name="error" filled className="qz-fi rd"/><h1 className="qz-ftitle">Erreur</h1><p className="qz-fsub">{errMsg}</p><button onClick={goBack} style={{display:'flex',alignItems:'center',gap:'.5rem',padding:'.75rem 1.5rem',background:'#fff',border:'1px solid var(--brd)',borderRadius:'.625rem',cursor:'pointer',fontSize:'.875rem',fontWeight:700,color:'var(--tx)',fontFamily:'Public Sans,sans-serif',marginTop:'.5rem'}}><Icon name="arrow_back"/> Retour</button></div></>);
   if(phase==='ineligible') return(<><style>{styles}</style><div className="qz-full"><Icon name="block" filled className="qz-fi rd"/><h1 className="qz-ftitle">Accès Refusé</h1><p className="qz-fsub">{ineligMsg}</p><p style={{fontSize:'.8125rem',color:'var(--txd)'}}>Contactez l'équipe RH pour toute question.</p><button onClick={goBack} style={{display:'flex',alignItems:'center',gap:'.5rem',padding:'.75rem 1.5rem',background:'#fff',border:'1px solid var(--brd)',borderRadius:'.625rem',cursor:'pointer',fontSize:'.875rem',fontWeight:700,color:'var(--tx)',fontFamily:'Public Sans,sans-serif',marginTop:'.5rem'}}><Icon name="arrow_back"/> Retour à ma candidature</button></div></>);
-  if(phase==='face_check') return(<><style>{styles}</style><FaceCheckScreen userId={userId} sujetId={candidatureId||sujetId} onVerified={handleFaceVerified}/></>);
+
+  // ── onBack={goBack} passé au FaceCheckScreen ──────────────────────
+  if(phase==='face_check') return(<><style>{styles}</style><FaceCheckScreen userId={userId} sujetId={candidatureId||sujetId} onVerified={handleFaceVerified} onBack={goBack}/></>);
+
   if(phase==='terminated') return(<><style>{styles}</style><div className="qz-full"><Icon name="gpp_bad" filled className="qz-fi rd"/><h1 className="qz-ftitle">Session Clôturée</h1><p className="qz-fsub">Votre session a été automatiquement clôturée et vos réponses soumises.</p><p style={{fontSize:'.8125rem',color:'var(--txd)'}}>Contactez l'équipe RH pour toute question.</p></div></>);
   if(phase==='submitted'&&result) return(<><style>{styles}</style><div className="qz-full"><Icon name="check_circle" filled className="qz-fi gr"/><h1 className="qz-ftitle">Quiz Soumis !</h1><p className="qz-fsub">Vos réponses ont été enregistrées et transmises à l'équipe RH.</p><div className="qz-score-row"><div className="qz-score-box"><span className="qz-snum">{result.score??'—'}<span style={{fontSize:'1.5rem',color:'var(--txd)',fontWeight:600}}>/50</span></span><span className="qz-slbl">Score</span>{result.mention&&<span style={{marginTop:'.5rem',padding:'.25rem .875rem',background:'var(--grn-bg)',color:'var(--grn)',borderRadius:'9999px',fontSize:'.75rem',fontWeight:700}}>{result.mention}</span>}</div><div className="qz-score-box"><span className="qz-snum">{result.scorePourcentage??'—'}<span style={{fontSize:'1.5rem',color:'var(--txd)',fontWeight:600}}>%</span></span><span className="qz-slbl">Pourcentage</span></div><div className="qz-score-box"><span className="qz-snum">{result.correctAnswers??'—'}/{result.totalQuestions??total}</span><span className="qz-slbl">Bonnes réponses</span></div></div><button onClick={goBack} style={{display:'flex',alignItems:'center',gap:'.5rem',padding:'.75rem 1.5rem',background:'var(--pr)',color:'#fff',border:'none',borderRadius:'.625rem',cursor:'pointer',fontSize:'.875rem',fontWeight:700,fontFamily:'Public Sans,sans-serif',boxShadow:'0 4px 12px rgba(0,61,122,.25)',marginTop:'.5rem'}}><Icon name="arrow_back"/> Retour à ma candidature</button></div></>);
 
   return (
     <><style>{styles}</style>
     {toast&&<div className={`qz-toast ${toast.type}`}><Icon name={toast.type==='success'?'check_circle':toast.type==='warn'?'warning':'error'} filled={toast.type==='success'}/>{toast.msg}</div>}
-
-    {/* ✅ NOUVEAU : Lightbox image question */}
     {lightboxImg && <Lightbox src={lightboxImg} onClose={() => setLightboxImg(null)}/>}
 
     <div className="qz-page">
@@ -1007,19 +901,11 @@ const CandidatQuiz = () => {
             <p className="qz-qnum">Question {current+1} / {total}</p>
             <span className="qz-compl"><Icon name="school" style={{fontSize:'.9rem'}}/>{q.difficulte||'Intermédiaire'}</span>
             <p className="qz-qtxt">{q.texte}</p>
-
-            {/* ✅ NOUVEAU : image de la question — entre énoncé et options */}
             {q.imageUrl && (
               <div className="qz-qimg">
-                <img
-                  src={q.imageUrl}
-                  alt="Illustration de la question"
-                  onClick={() => setLightboxImg(q.imageUrl)}
-                  title="Cliquez pour agrandir"
-                />
+                <img src={q.imageUrl} alt="Illustration de la question" onClick={() => setLightboxImg(q.imageUrl)} title="Cliquez pour agrandir"/>
               </div>
             )}
-
             <div className="qz-opts">
               {(q.options||[]).map((opt,idx)=>{
                 const sel=reponses[q.id]===opt.id;

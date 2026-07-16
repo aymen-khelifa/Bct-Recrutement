@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useNotif } from '../../context/NotifContext';
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap');
@@ -16,16 +17,9 @@ const styles = `
   }
 
   /* ── HEADER ── */
-  .db-header {
-    position: sticky; top: 0; z-index: 50;
-    background: #fff; border-bottom: 1px solid #e2e8f0;
-    padding: 0.75rem 1rem;
-  }
+  .db-header { position: sticky; top: 0; z-index: 50; background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0.75rem 1rem; }
   @media (min-width: 1024px) { .db-header { padding: 0.75rem 2.5rem; } }
-  .db-header-inner {
-    max-width: 1280px; margin: 0 auto;
-    display: flex; align-items: center; justify-content: space-between;
-  }
+  .db-header-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
   .db-brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
   .db-brand svg { width: 2rem; height: 2rem; color: #00007a; flex-shrink: 0; }
   .db-brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em; color: #00007a; text-transform: uppercase; }
@@ -101,10 +95,10 @@ const styles = `
   .db-td-right  { text-align: right; }
 
   .db-status { display: inline-flex; align-items: center; padding: 0.25rem 0.875rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; line-height: 1.4; white-space: nowrap; }
-  .db-status-blue  { background: #00007a; color: #fff; }
-  .db-status-green { background: #10b981; color: #fff; }
-  .db-status-gray  { background: #e2e8f0; color: #334155; }
-  .db-status-red   { background: #ef4444; color: #fff; }
+  .db-status-blue   { background: #00007a; color: #fff; }
+  .db-status-green  { background: #10b981; color: #fff; }
+  .db-status-gray   { background: #e2e8f0; color: #334155; }
+  .db-status-red    { background: #ef4444; color: #fff; }
   .db-status-orange { background: #f59e0b; color: #fff; }
 
   .db-view-btn { padding: 0.5rem; background: none; border: none; cursor: pointer; color: #94a3b8; border-radius: 0.375rem; transition: color 0.2s, background 0.15s; }
@@ -118,54 +112,19 @@ const styles = `
 
   /* ── CANDIDATURES CARDS ── */
   .db-apps-list { display: flex; flex-direction: column; gap: 0.75rem; }
-  .db-app-card {
-    background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem;
-    padding: 1.125rem 1.25rem; display: flex; align-items: center; gap: 1rem;
-    transition: box-shadow 0.2s, border-color 0.2s; cursor: default;
-    position: relative; overflow: hidden;
-  }
-  .db-app-card::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-    width: 3px; border-radius: 0 2px 2px 0;
-    background: #00007a; opacity: 0;
-    transition: opacity 0.2s;
-  }
+  .db-app-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.125rem 1.25rem; display: flex; align-items: center; gap: 1rem; transition: box-shadow 0.2s, border-color 0.2s; cursor: default; position: relative; overflow: hidden; }
+  .db-app-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 0 2px 2px 0; background: #00007a; opacity: 0; transition: opacity 0.2s; }
   .db-app-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: rgba(0,0,122,0.2); }
   .db-app-card:hover::before { opacity: 1; }
-
-  .db-app-num {
-    width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; flex-shrink: 0;
-    background: rgba(0,0,122,0.07); color: #00007a;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.75rem; font-weight: 800; letter-spacing: -0.02em;
-  }
+  .db-app-num { width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; flex-shrink: 0; background: rgba(0,0,122,0.07); color: #00007a; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; letter-spacing: -0.02em; }
   .db-app-body { flex: 1; min-width: 0; }
   .db-app-title { font-size: 0.9375rem; font-weight: 700; color: #0f172a; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .db-app-sub { font-size: 0.75rem; color: #64748b; margin-top: 0.2rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
   .db-app-sub-item { display: flex; align-items: center; gap: 0.25rem; }
   .db-app-sub-item .material-symbols-outlined { font-size: 0.75rem; color: #94a3b8; }
-
   .db-app-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
-
-  /* Statut pill */
-  .db-app-pill {
-    display: inline-flex; align-items: center; gap: 0.3rem;
-    padding: 0.3125rem 0.75rem; border-radius: 9999px;
-    font-size: 0.6875rem; font-weight: 700; white-space: nowrap; line-height: 1;
-  }
+  .db-app-pill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3125rem 0.75rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 700; white-space: nowrap; line-height: 1; }
   .db-app-pill-dot { width: 0.375rem; height: 0.375rem; border-radius: 9999px; flex-shrink: 0; }
-  .db-status-blue   .db-app-pill-dot { background: #003d7a; }
-  .db-status-green  .db-app-pill-dot { background: #059669; }
-  .db-status-gray   .db-app-pill-dot { background: #64748b; }
-  .db-status-red    .db-app-pill-dot { background: #dc2626; }
-  .db-status-orange .db-app-pill-dot { background: #d97706; }
-
-  .db-app-pill.db-status-blue   { background: rgba(0,61,122,0.08);  color: #003d7a; }
-  .db-app-pill.db-status-green  { background: rgba(5,150,105,0.1);  color: #059669; }
-  .db-app-pill.db-status-gray   { background: #f1f5f9;               color: #475569; }
-  .db-app-pill.db-status-red    { background: rgba(220,38,38,0.08); color: #dc2626; }
-  .db-app-pill.db-status-orange { background: rgba(245,158,11,0.1); color: #d97706; }
-
   .db-app-action { width: 2rem; height: 2rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #fff; color: #94a3b8; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
   .db-app-action:hover { color: #00007a; border-color: rgba(0,0,122,0.25); background: rgba(0,0,122,0.05); }
   .db-app-action .material-symbols-outlined { font-size: 1rem; }
@@ -200,21 +159,34 @@ const styles = `
   .db-notif-title { font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
   .db-notif-title .material-symbols-outlined { color: #00007a; }
   .db-notif-count { background: #00007a; color: #fff; font-size: 0.625rem; font-weight: 700; padding: 0.125rem 0.375rem; border-radius: 0.25rem; }
-  .db-notif-item { padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; gap: 0.75rem; transition: background 0.15s; }
+  .db-notif-item { padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; gap: 0.75rem; transition: background 0.15s; cursor: pointer; }
   .db-notif-item.unread { background: rgba(0,0,122,0.03); }
   .db-notif-item:hover { background: rgba(0,0,122,0.06); }
   .db-notif-item.read { opacity: 0.6; }
   .db-notif-item.read:hover { background: #f8fafc; opacity: 1; }
   .db-notif-icon { width: 2rem; height: 2rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
   .db-notif-icon .material-symbols-outlined { font-size: 0.875rem; }
+  .db-notif-icon.blue   { background: #003d7a; }
   .db-notif-icon.green  { background: #10b981; }
   .db-notif-icon.yellow { background: #f59e0b; }
+  .db-notif-icon.red    { background: #ef4444; }
+  .db-notif-icon.purple { background: #7c3aed; }
   .db-notif-icon.gray   { background: #cbd5e1; color: #64748b; }
   .db-notif-text p:first-child { font-size: 0.875rem; font-weight: 700; }
   .db-notif-text p:nth-child(2) { font-size: 0.75rem; color: #475569; margin-top: 0.25rem; }
   .db-notif-text p:last-child { font-size: 0.625rem; color: #94a3b8; margin-top: 0.5rem; }
+
+  /* Skeleton notif (chargement) */
+  .db-notif-skeleton { padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; gap: 0.75rem; }
+  .db-sk { background: #f1f5f9; border-radius: 0.375rem; animation: db-sk 1.5s ease-in-out infinite; }
+  .db-sk-circle { width: 2rem; height: 2rem; border-radius: 9999px; flex-shrink: 0; background: #f1f5f9; animation: db-sk 1.5s ease-in-out infinite; }
+  @keyframes db-sk { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .db-notif-empty { padding: 2rem; text-align: center; color: #94a3b8; font-size: 0.875rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+  .db-notif-empty .material-symbols-outlined { font-size: 2rem; color: #cbd5e1; }
   .db-mark-all-btn { width: 100%; padding: 0.75rem; font-size: 0.75rem; font-weight: 700; color: #64748b; background: #f8fafc; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Public Sans', sans-serif; transition: color 0.2s; }
   .db-mark-all-btn:hover { color: #00007a; }
+  .db-mark-all-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* Progress card */
   .db-progress-card { background: linear-gradient(135deg, #00007a, #1e3a8a); border-radius: 0.75rem; padding: 1.5rem; color: #fff; box-shadow: 0 10px 25px rgba(0,0,122,0.3); }
@@ -232,112 +204,71 @@ const styles = `
   .db-step-label.pending { color: rgba(255,255,255,0.5); }
   .db-prep-btn { width: 100%; margin-top: 1.5rem; padding: 0.5rem; background: #fff; color: #00007a; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; font-family: 'Public Sans', sans-serif; transition: background 0.2s; }
   .db-prep-btn:hover { background: #eff6ff; }
-
-  /* ── FOOTER ── */
-  .db-footer { background: #fff; border-top: 1px solid #e2e8f0; margin-top: 3rem; padding: 3rem 0 0; }
-  .db-footer-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: grid; grid-template-columns: 1fr; gap: 2rem; }
-  @media (min-width: 768px) { .db-footer-inner { grid-template-columns: repeat(4, 1fr); } }
-  .db-footer-brand { display: flex; align-items: center; gap: 0.5rem; color: #00007a; margin-bottom: 1rem; opacity: 0.8; }
-  .db-footer-brand svg { width: 1.5rem; height: 1.5rem; flex-shrink: 0; }
-  .db-footer-brand h2 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
-  .db-footer-desc { font-size: 0.75rem; color: #64748b; line-height: 1.6; }
-  .db-footer-col h4 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #0f172a; margin-bottom: 1rem; }
-  .db-footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
-  .db-footer-col ul li a { font-size: 0.75rem; color: #64748b; text-decoration: none; transition: color 0.2s; }
-  .db-footer-col ul li a:hover { color: #00007a; }
-  .db-footer-col ul li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #64748b; }
-  .db-footer-col ul li .material-symbols-outlined { font-size: 0.75rem; flex-shrink: 0; }
-  .db-footer-bottom { max-width: 1280px; margin: 3rem auto 0; padding: 2rem 1rem; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; align-items: center; gap: 1rem; justify-content: space-between; }
-  @media (min-width: 768px) { .db-footer-bottom { flex-direction: row; } }
-  .db-footer-bottom p { font-size: 0.625rem; color: #94a3b8; }
-  .db-footer-icons { display: flex; gap: 1rem; }
-  .db-footer-icons a { color: #94a3b8; text-decoration: none; transition: color 0.2s; }
-  .db-footer-icons a:hover { color: #00007a; }
-  .db-footer-icons .material-symbols-outlined { font-size: 1.125rem; display: block; }
 `;
 
-const recommendations = [
-  { icon: 'analytics', match: 'Match 95%', title: 'Modélisation de Risques Systémiques', desc: 'Utilisation du Deep Learning pour prédire les instabilités du marché financier européen.', location: 'Paris' },
-  { icon: 'payments',  match: 'Match 88%', title: 'Économétrie et IA', desc: 'Analyse automatisée des politiques monétaires mondiales via le Traitement du Langage Naturel (NLP).', location: 'Francfort' },
-];
 
-const notifications = [
-  { icon: 'check_circle', iconClass: 'green',  title: "Confirmation d'entretien",  desc: 'Votre entretien pour "Assistant Audit" est confirmé pour le 24 Oct à 14:30.', time: 'Il y a 2 heures', unread: true },
-  { icon: 'alarm',        iconClass: 'yellow', title: 'Rappel : Tests IA',         desc: "N'oubliez pas de compléter votre évaluation technique automatisée.",         time: 'Il y a 5 heures', unread: true },
-  { icon: 'mail',         iconClass: 'gray',   title: 'Candidature reçue',         desc: 'Votre dossier pour "Analyste Financier" a bien été enregistré.',             time: 'Hier',            unread: false },
-];
 
-const getActiveStep = (apps) => {
-  const statuts = apps.map(a => a.statut || '');
-  if (statuts.includes('ACCEPTE'))            return 3;
-  if (statuts.includes('ENTRETIEN_PLANIFIE')) return 2;
-  if (statuts.includes('EN_COURS_EXAMEN'))    return 2;
-  return 1;
-};
+
 
 const CandidatDashboard = () => {
-  // ── Données user réelles ──────────────────────────────────────────────
-  const [user, setUser] = useState(null);
-  const [profil, setprofil] = useState(null);
-const navigate = useNavigate();
+  const [user,    setUser]    = useState(null);
+  const [profil,  setprofil]  = useState(null);
+  const navigate = useNavigate();
+
+  // ── Notifications temps réel ──────────────────────────────────────────
+  const {
+    notifications,
+    unreadCount,
+    markAllRead,
+    markRead,
+    loading: notifLoading,
+  } = useNotif() ?? { notifications: [], unreadCount: 0, markAllRead: () => {}, markRead: () => {}, loading: false };
 
   useEffect(() => {
-    axios.get('/api/auth/whoami')
-      .then(r => setUser(r.data))
-      .catch(() => {});
+    axios.get('/api/auth/whoami').then(r => setUser(r.data)).catch(() => {});
   }, []);
 
-   useEffect(() => {
-    axios.get('/api/profil/me')
-      .then(r => setprofil(r.data))
-      .catch(() => {});
+  useEffect(() => {
+    axios.get('/api/profil/me').then(r => setprofil(r.data)).catch(() => {});
   }, []);
-  // ── Données candidatures réelles ─────────────────────────────────────
+
   const [applications, setApplications] = useState([]);
-  const [loadingApps, setLoadingApps]   = useState(true);
-  const [errorApps, setErrorApps]       = useState(null);
+  const [loadingApps,  setLoadingApps]  = useState(true);
+  const [errorApps,    setErrorApps]    = useState(null);
 
   useEffect(() => {
     axios.get('/api/candidatures/mes')
-      .then(r => {
-    
-      setApplications(r.data);
-    })
+      .then(r => setApplications(r.data))
       .catch(() => setErrorApps('Impossible de charger vos candidatures.'))
       .finally(() => setLoadingApps(false));
   }, []);
 
-  const activeStep = getActiveStep(applications);
 
-  // ── Variables profil ─────────────────────────────────────────────────
-  const userName    = user?.name        || '—';
-  const userEmail   = user?.email       || '—';
-  const userPhone   = user?.phoneNumber || null;
-  const userPhoto   = user?.photoUrl    || user?.photo_url || '';
-  const userSpecialite = profil?.specialite; // vient du profil /api/profil/me si besoin
+  const userName       = user?.name        || '—';
+  const userEmail      = user?.email       || '—';
+  const userPhone      = user?.phoneNumber || null;
+  const userPhoto      = user?.photoUrl    || user?.photo_url || '';
+  const userSpecialite = profil?.specialite;
   const useruniversite = profil?.universite;
-  const initiales   = (userName[0] || '?').toUpperCase();
+  const initiales      = (userName[0] || '?').toUpperCase();
+
+  // Notifications affichées : max 5 dans le panel
+  const visibleNotifs = notifications.slice(0, 5);
 
   return (
     <>
       <style>{styles}</style>
       <div className="db-root">
-
-        {/* ── MAIN ── */}
         <main className="db-main">
 
           {/* Left column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-            {/* Profile card — données réelles */}
+            {/* Profile card */}
             <div className="db-card db-profile-card">
               <div className="db-profile-inner">
                 <div className="db-profile-left">
-                  <div
-                    className="db-profile-pic"
-                    style={{ backgroundImage: userPhoto ? `url('${userPhoto}')` : 'none' }}
-
-                  >
+                  <div className="db-profile-pic" style={{ backgroundImage: userPhoto ? `url('${userPhoto}')` : 'none' }}>
                     {!userPhoto && initiales}
                   </div>
                   <div>
@@ -360,238 +291,199 @@ const navigate = useNavigate();
                     </div>
                   </div>
                 </div>
-               <button className="db-edit-btn" onClick={() => navigate('/candidat/profil')}>
-  <span className="material-symbols-outlined">edit</span> Modifier le profil
-</button>
+                <button className="db-edit-btn" onClick={() => navigate('/candidat/profil')}>
+                  <span className="material-symbols-outlined">edit</span> Modifier le profil
+                </button>
               </div>
             </div>
 
-         {/* ════ MES CANDIDATURES ════ */}
-<div className="db-section">
-  <div className="db-section-header">
-    <h3 className="db-section-title">
-      <span className="material-symbols-outlined">description</span>
-      Mes candidatures
-      {!loadingApps && (
-        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
-          ({applications.length} / 3)
-        </span>
-      )}
-    </h3>
-    <a href="/candidat/candidatures" className="db-section-link">Voir tout</a>
-  </div>
-
-  <div className="db-card">
-
-    {loadingApps && (
-      <div className="db-table-state">
-        <span className="material-symbols-outlined db-spin">progress_activity</span>
-        <p>Chargement de vos candidatures...</p>
-      </div>
-    )}
-
-    {!loadingApps && errorApps && (
-      <div className="db-table-state">
-        <span className="material-symbols-outlined">error_outline</span>
-        <p>{errorApps}</p>
-      </div>
-    )}
-
-    {!loadingApps && !errorApps && applications.length === 0 && (
-      <div className="db-table-state">
-        <span className="material-symbols-outlined">inbox</span>
-        <p>Vous n'avez encore postulé à aucune offre.</p>
-      </div>
-    )}
-
-    {!loadingApps && !errorApps && applications.length > 0 && (
-      <div style={{ padding: '1rem' }}>
-        <div className="db-apps-list">
-          {applications.map((app, idx) => {
-
-            // ── Couleur selon statut ──
-           const colorMap = {
-  // valeurs enum
-  EN_COURS_EXAMEN:    { border: '#003d7a', pill: 'rgba(0,61,122,0.08)',   text: '#003d7a', dot: '#003d7a' },
-  ENTRETIEN_PLANIFIE: { border: '#d97706', pill: 'rgba(245,158,11,0.1)',  text: '#d97706', dot: '#d97706' },
-  ACCEPTE_QUIZ:       { border: '#7c3aed', pill: 'rgba(124,58,237,0.08)', text: '#7c3aed', dot: '#7c3aed' },
-  ACCEPTE:            { border: '#059669', pill: 'rgba(5,150,105,0.1)',   text: '#059669', dot: '#059669' },
-  REFUSE:             { border: '#dc2626', pill: 'rgba(220,38,38,0.08)',  text: '#dc2626', dot: '#dc2626' },
-    PRESELECTIONNE_CV:             { border: '#059669', pill: 'rgba(25, 65, 17, 0.08)',  text: '#059669', dot: '#059669' },
-    ELIMINE_CV:             { border: '#dc2626', pill: 'rgba(220,38,38,0.08)',  text: '#dc2626', dot: '#dc2626' },
-    ELIMINE_QUIZ:             { border: '#dc2626', pill: 'rgba(220,38,38,0.08)',  text: '#dc2626', dot: '#dc2626' },
-
-  // labels lisibles (fallback si backend retourne le label)
-  "En cours d'examen":    { border: '#003d7a', pill: 'rgba(0,61,122,0.08)',   text: '#003d7a', dot: '#003d7a' },
-  "Entretien planifié":   { border: '#d97706', pill: 'rgba(245,158,11,0.1)',  text: '#d97706', dot: '#d97706' },
-  "Accepté phase quiz":   { border: '#7c3aed', pill: 'rgba(124,58,237,0.08)', text: '#7c3aed', dot: '#7c3aed' },
-  "Accepté":              { border: '#059669', pill: 'rgba(5,150,105,0.1)',   text: '#059669', dot: '#059669' },
-  "Refusé":               { border: '#dc2626', pill: 'rgba(220,38,38,0.08)',  text: '#dc2626', dot: '#dc2626' },
-};
-const c = colorMap[app.statut] || colorMap[app.statutLabel];
-
-            const labelMap = {
-  EN_ATTENTE:         'En attente',
-  EN_COURS_EXAMEN:    'En cours d\'examen',
-  ENTRETIEN_PLANIFIE: 'Entretien planifié',
-  ACCEPTE_QUIZ:       'Quiz technique',
-  ACCEPTE:            'Accepté',
-  REFUSE:             'Refusé',
-};
-const label = app.statutLabel || labelMap[app.statut] || app.statut || '—';
-
-            return (
-              <div
-                key={app.id}
-                className="db-app-card"
-                style={{
-                  borderLeftColor: c.border,
-                  borderLeftWidth: '3px',
-                  opacity: app.statut === 'REFUSE' ? 0.8 : 1,
-                }}
-              >
-                <div
-                  className="db-app-num"
-                  style={{ background: c.pill, color: c.text }}
-                >
-                  #{idx + 1}
-                </div>
-                <div className="db-app-body">
-                  <p className="db-app-title">{app.sujetTitre}</p>
-                  <div className="db-app-sub">
-                    {app.sujetDepartement && (
-                      <span className="db-app-sub-item">
-                        <span className="material-symbols-outlined">corporate_fare</span>
-                        {app.sujetDepartement}
-                      </span>
-                    )}
-                    <span className="db-app-sub-item">
-                      <span className="material-symbols-outlined">calendar_today</span>
-                      {app.dateDepot || '—'}
-                    </span>
-                  </div>
-                </div>
-                <div className="db-app-right">
-                  <span
-                    className="db-app-pill"
-                    style={{ background: c.pill, color: c.text }}
-                  >
-                    <span
-                      className="db-app-pill-dot"
-                      style={{ background: c.dot }}
-                    />
-                    {label}
-                  </span>
-                  <button
-                    className="db-app-action"
-                    title="Voir les détails"
-                    onClick={() => navigate(`/candidat/candidatures/${app.id}`)}
-                  >
-                    <span className="material-symbols-outlined">chevron_right</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    )}
-  </div>
-</div>
-
-            {/* Recommendations */}
+            {/* Candidatures */}
             <div className="db-section">
               <div className="db-section-header">
                 <h3 className="db-section-title">
-                  <span className="material-symbols-outlined">auto_awesome</span> Offres recommandées par IA
+                  <span className="material-symbols-outlined">description</span>
+                  Mes candidatures
+                  {!loadingApps && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
+                      ({applications.length} / 3)
+                    </span>
+                  )}
                 </h3>
-                <div className="db-rec-nav">
-                  <button className="db-rec-nav-btn"><span className="material-symbols-outlined">chevron_left</span></button>
-                  <button className="db-rec-nav-btn"><span className="material-symbols-outlined">chevron_right</span></button>
-                </div>
+                <a href="/candidat/candidatures" className="db-section-link">Voir tout</a>
               </div>
-              <div className="db-rec-grid">
-                {recommendations.map((rec) => (
-                  <div key={rec.title} className="db-rec-card">
-                    <div className="db-rec-card-top">
-                      <div className="db-rec-icon">
-                        <span className="material-symbols-outlined">{rec.icon}</span>
-                      </div>
-                      <span className="db-rec-match">{rec.match}</span>
-                    </div>
-                    <p className="db-rec-title">{rec.title}</p>
-                    <p className="db-rec-desc">{rec.desc}</p>
-                    <div className="db-rec-footer">
-                      <span className="db-rec-location">
-                        <span className="material-symbols-outlined">location_on</span> {rec.location}
-                      </span>
-                      <button className="db-rec-apply">
-                        Postuler <span className="material-symbols-outlined">arrow_forward</span>
-                      </button>
+
+              <div className="db-card">
+                {loadingApps && (
+                  <div className="db-table-state">
+                    <span className="material-symbols-outlined db-spin">progress_activity</span>
+                    <p>Chargement de vos candidatures...</p>
+                  </div>
+                )}
+                {!loadingApps && errorApps && (
+                  <div className="db-table-state">
+                    <span className="material-symbols-outlined">error_outline</span>
+                    <p>{errorApps}</p>
+                  </div>
+                )}
+                {!loadingApps && !errorApps && applications.length === 0 && (
+                  <div className="db-table-state">
+                    <span className="material-symbols-outlined">inbox</span>
+                    <p>Vous n'avez encore postulé à aucune offre.</p>
+                  </div>
+                )}
+                {!loadingApps && !errorApps && applications.length > 0 && (
+                  <div style={{ padding: '1rem' }}>
+                    <div className="db-apps-list">
+                      {applications.map((app, idx) => {
+                        const colorMap = {
+                          EN_COURS_EXAMEN:    { border: '#003d7a', pill: 'rgba(0,61,122,0.08)',   text: '#003d7a', dot: '#003d7a' },
+                          ENTRETIEN_PLANIFIE: { border: '#d97706', pill: 'rgba(245,158,11,0.1)',  text: '#d97706', dot: '#d97706' },
+                          ACCEPTE_QUIZ:       { border: '#7c3aed', pill: 'rgba(124,58,237,0.08)', text: '#7c3aed', dot: '#7c3aed' },
+                          ACCEPTE:            { border: '#059669', pill: 'rgba(5,150,105,0.1)',   text: '#059669', dot: '#059669' },
+                          REFUSE:             { border: '#dc2626', pill: 'rgba(220,38,38,0.08)',  text: '#dc2626', dot: '#dc2626' },
+                          PRESELECTIONNE_CV:  { border: '#059669', pill: 'rgba(25,65,17,0.08)',   text: '#059669', dot: '#059669' },
+                          ELIMINE_CV:         { border: '#dc2626', pill: 'rgba(220,38,38,0.08)',  text: '#dc2626', dot: '#dc2626' },
+                          ELIMINE_QUIZ:       { border: '#dc2626', pill: 'rgba(220,38,38,0.08)',  text: '#dc2626', dot: '#dc2626' },
+                        };
+                        const c = colorMap[app.statut] || { border: '#94a3b8', pill: '#f1f5f9', text: '#475569', dot: '#94a3b8' };
+                        const labelMap = {
+                          EN_ATTENTE:         'En attente',
+                          EN_COURS_EXAMEN:    "En cours d'examen",
+                          ENTRETIEN_PLANIFIE: 'Entretien planifié',
+                          ACCEPTE_QUIZ:       'Quiz technique',
+                          ACCEPTE:            'Accepté',
+                          REFUSE:             'Refusé',
+                          PRESELECTIONNE_CV:  'Présélectionné',
+                          ELIMINE_CV:         'Non retenu (CV)',
+                          ELIMINE_QUIZ:       'Non retenu (Quiz)',
+                        };
+                        const label = app.statutLabel || labelMap[app.statut] || app.statut || '—';
+                        return (
+                          <div key={app.id} className="db-app-card"
+                            style={{ borderLeftColor: c.border, borderLeftWidth: '3px', opacity: app.statut === 'REFUSE' ? 0.8 : 1 }}>
+                            <div className="db-app-num" style={{ background: c.pill, color: c.text }}>#{idx + 1}</div>
+                            <div className="db-app-body">
+  <p
+    className="db-app-title"
+    style={{
+      margin: 0,
+      whiteSpace: "normal",
+      wordBreak: "break-word",
+      overflowWrap: "break-word",
+      lineHeight: "1.4"
+    }}
+  >
+    {app.sujetTitre}
+  </p>
+
+  <div className="db-app-sub">
+    {app.sujetDepartement && (
+      <span className="db-app-sub-item">
+        <span className="material-symbols-outlined">
+          corporate_fare
+        </span>
+        {app.sujetDepartement}
+      </span>
+    )}
+
+    <span className="db-app-sub-item">
+      <span className="material-symbols-outlined">
+        calendar_today
+      </span>
+      {app.dateDepot || "—"}
+    </span>
+  </div>
+</div>
+                            <div className="db-app-right">
+                              <span className="db-app-pill" style={{ background: c.pill, color: c.text }}>
+                                <span className="db-app-pill-dot" style={{ background: c.dot }}/>
+                                {label}
+                              </span>
+                              <button className="db-app-action" title="Voir les détails"
+                                onClick={() => navigate(`/candidat/candidatures/${app.id}`)}>
+                                <span className="material-symbols-outlined">chevron_right</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
+          
           </div>
 
           {/* ── SIDEBAR ── */}
           <aside className="db-sidebar">
 
+            {/* ── Panel notifications — données réelles ── */}
             <div className="db-card db-notif-card">
               <div className="db-notif-header">
                 <h3 className="db-notif-title">
                   <span className="material-symbols-outlined">notifications_active</span> Notifications
                 </h3>
-                <span className="db-notif-count">2 Nouvelles</span>
+                {unreadCount > 0 && (
+                  <span className="db-notif-count">{unreadCount} Nouvelle{unreadCount > 1 ? 's' : ''}</span>
+                )}
               </div>
-              <div className="db-notif-list">
-                {notifications.map((n, i) => (
-                  <div key={i} className={`db-notif-item ${n.unread ? 'unread' : 'read'}`}>
-                    <div className={`db-notif-icon ${n.iconClass}`}>
-                      <span className="material-symbols-outlined">{n.icon}</span>
+
+              {/* Chargement */}
+              {notifLoading && (
+                <>
+                  {[1,2,3].map(i => (
+                    <div key={i} className="db-notif-skeleton">
+                      <div className="db-sk-circle"/>
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:'0.375rem'}}>
+                        <div className="db-sk" style={{height:'0.75rem',width:'60%'}}/>
+                        <div className="db-sk" style={{height:'0.625rem',width:'90%'}}/>
+                      </div>
                     </div>
-                    <div className="db-notif-text">
-                      <p>{n.title}</p>
-                      <p>{n.desc}</p>
-                      <p>{n.time}</p>
-                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* Vide */}
+              {!notifLoading && visibleNotifs.length === 0 && (
+                <div className="db-notif-empty">
+                  <span className="material-symbols-outlined">notifications_off</span>
+                  <p>Aucune notification pour le moment.</p>
+                </div>
+              )}
+
+              {/* Liste */}
+              {!notifLoading && visibleNotifs.map((n) => (
+                <div
+                  key={n.id}
+                  className={`db-notif-item ${n.lu ? 'read' : 'unread'}`}
+                  onClick={() => !n.lu && markRead(n.id)}
+                >
+                  <div className={`db-notif-icon ${n.iconClass}`}>
+                    <span className="material-symbols-outlined">{n.icon}</span>
                   </div>
-                ))}
-              </div>
-              <button className="db-mark-all-btn">Tout marquer comme lu</button>
+                  <div className="db-notif-text">
+                    <p>{n.titre}</p>
+                    <p>{n.message}</p>
+                    <p>{n.timeLabel}</p>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                className="db-mark-all-btn"
+                onClick={markAllRead}
+                disabled={unreadCount === 0}
+              >
+                Tout marquer comme lu
+              </button>
             </div>
 
-            <div className="db-progress-card">
-              <p className="db-progress-title">
-                <span className="material-symbols-outlined">trending_up</span> Prochaine étape
-              </p>
-              <div className="db-progress-steps">
-                <div className="db-progress-step">
-                  <div className={`db-step-num ${activeStep >= 1 ? 'done' : 'active'}`}>1</div>
-                  <span className="db-step-label">Analyse IA complétée</span>
-                </div>
-                <div className="db-progress-connector" />
-                <div className="db-progress-step">
-                  <div className={`db-step-num ${activeStep > 2 ? 'done' : activeStep === 2 ? 'active' : 'pending'}`}>2</div>
-                  <span className={`db-step-label ${activeStep === 2 ? 'active' : activeStep < 2 ? 'pending' : ''}`}>
-                    Entretien technique{activeStep === 2 ? ' (En attente)' : ''}
-                  </span>
-                </div>
-                <div className="db-progress-connector" />
-                <div className="db-progress-step">
-                  <div className={`db-step-num ${activeStep >= 3 ? 'done' : 'pending'}`}>3</div>
-                  <span className={`db-step-label ${activeStep < 3 ? 'pending' : ''}`}>Décision finale</span>
-                </div>
-              </div>
-              <button className="db-prep-btn">Préparer l'entretien</button>
-            </div>
+            
 
           </aside>
-
         </main>
-
       </div>
     </>
   );
