@@ -19,7 +19,7 @@ jobs:
           MYSQL_DATABASE: recrutement
           MYSQL_ROOT_PASSWORD: root
         ports:
-          - 3307:3307
+          - 3307:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
@@ -36,7 +36,7 @@ jobs:
       - name: Build with Maven
         run: |
           cd backend
-          mvn clean package -DskipTests
+          mvn clean package -Dmaven.test.skip=true
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3307/recrutement?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
           SPRING_DATASOURCE_USERNAME: root
