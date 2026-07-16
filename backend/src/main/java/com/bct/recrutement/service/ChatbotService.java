@@ -26,7 +26,7 @@ public class ChatbotService {
 
     private static final Logger log = LoggerFactory.getLogger(ChatbotService.class);
 
-    @Value("${groq1.api.key}")
+    @Value("${groq.api.key}")
     private String groqApiKey;
 
     @Autowired private CandidatureRepository candidatureRepository;

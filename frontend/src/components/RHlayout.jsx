@@ -2,6 +2,8 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import ChatbotWidget from './ChatbotWidget';
+import bctImage from '../assets/bct.png';
+
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
@@ -131,14 +133,9 @@ const RHLayout = () => {
         {/* ── SIDEBAR ── */}
         <aside className="rh-aside">
           {/* Brand */}
-          <div className="rh-aside-brand">
-            <span className="material-symbols-outlined">account_balance</span>
-            <div>
-              <h1>Banque Centrale</h1>
-              <p>Portail Recrutement RH</p>
-            </div>
-          </div>
-
+        <div className="rh-aside-brand">
+  <img src={bctImage} alt="BCT" style={{ width: '220px', filter: 'brightness(0) invert(1)' }} />
+</div>
           {/* Nav */}
           <nav className="rh-nav">
             {navItems.map((item) => (
@@ -154,14 +151,15 @@ const RHLayout = () => {
             ))}
           </nav>
 
-          {/* User */}
-         <div className="rh-aside-user">
+        <div className="rh-aside-user">
   {user?.photoUrl ? (
     <img
-      alt="Admin"
-      src={`/${user.photoUrl.replace(/^\//, '')}`}
-      style={{ width: '2.5rem', height: '2.5rem', borderRadius: '9999px',
-        border: '2px solid rgba(255,255,255,0.2)', objectFit: 'cover', flexShrink: 0 }}
+      alt="RH"
+      src={user.photoUrl}
+      style={{
+        width: '2.5rem', height: '2.5rem', borderRadius: '9999px',
+        border: '2px solid rgba(255,255,255,0.2)', objectFit: 'cover', flexShrink: 0
+      }}
     />
   ) : (
     <div style={{

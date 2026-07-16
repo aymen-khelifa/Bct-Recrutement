@@ -170,6 +170,7 @@ public class CandidatureService {
     // ─────────────────────────────────────────────────────────────────────────
     // CANDIDAT — Postuler à un sujet
     // ─────────────────────────────────────────────────────────────────────────
+
     public Map<String, Object> postuler(String email, Long sujetId, String lettreMotivation) {
         User candidat = userService.findByEmail(email);
 
@@ -190,6 +191,7 @@ public class CandidatureService {
             throw new RuntimeException(
                     "Votre niveau d'instruction ne correspond pas au niveau requis pour ce sujet");
         }
+
         long nbCandidatures = candidatureRepository.countByCandidat(candidat);
         if (nbCandidatures >= MAX_CANDIDATURES)
             throw new RuntimeException(
@@ -198,35 +200,38 @@ public class CandidatureService {
         candidatureRepository.findByCandidatIdAndSujetId(candidat.getId(), sujetId)
                 .ifPresent(c -> { throw new RuntimeException("Vous avez déjà postulé à ce sujet"); });
 
+        Candidature c = new Candidature();
+        c.setCandidat(candidat);
+        c.setSujet(sujet);
+        c.setStatut(StatutCandidature.EN_COURS_EXAMEN);
+        c.setDateDepot(LocalDate.now());
+        c.setLettreMotivation(lettreMotivation.trim());
 
-        Candidature c = Candidature.builder()
-                .candidat(candidat)
-                .sujet(sujet)
-                .statut(StatutCandidature.EN_COURS_EXAMEN)
-                .dateDepot(LocalDate.now())
-                .lettreMotivation(lettreMotivation.trim())
-                .build();
-        String cvUrl = profil.getCv();
         Candidature saved = candidatureRepository.save(c);
         scoringService.scorerCandidature(saved.getId()); // @Async → non bloquant
+
+        // ── Indexation CV ────────────────────────────────────────────────────
+        String cvUrl      = profil.getCv();
+        String cvPublicId = profil.getCvPublicId();
+
         if (cvUrl != null && !cvUrl.isBlank()) {
-            String cleanUrl = cvUrl.replaceAll("/s--[^/]+--", "");
             cvVectorClient.indexerCv(
                     saved.getId(),
                     candidat.getName(),
                     sujet.getTitre(),
-                    cleanUrl
+                    cvPublicId,  // ← pour signed URL (null si ancien CV)
+                    cvUrl        // ← fallback anciens CVs publics
             );
         }
+
         cvVectorClient.indexerFiche(
                 saved.getId(),
                 candidat.getName(),
                 ficheIndexService.construireTexteFiche(saved, null)
         );
-        return toMap(saved);
-    }
 
-    // ─────────────────────────────────────────────────────────────────────────
+        return toMap(saved);
+    }  // ─────────────────────────────────────────────────────────────────────────
     // HELPERS PRIVÉS
     // ─────────────────────────────────────────────────────────────────────────
 

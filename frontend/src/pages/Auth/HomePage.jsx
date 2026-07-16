@@ -413,8 +413,8 @@ useEffect(() => {
         <div className="bc-modal-icon">
           <span className="material-symbols-outlined">account_balance</span>
         </div>
-        <h2>Espace Candidat</h2>
-        <p>Connectez-vous pour suivre vos candidatures</p>
+        <h2>Se connecter</h2>
+        <p>Connectez-vous </p>
       </div>
       <div className="bc-modal-body">
         <form onSubmit={handleLoginSubmit}>

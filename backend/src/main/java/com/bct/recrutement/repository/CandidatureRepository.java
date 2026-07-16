@@ -4,8 +4,11 @@ import com.bct.recrutement.entity.Candidature;
 import com.bct.recrutement.entity.Candidature.StatutCandidature;
 import com.bct.recrutement.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,4 +55,16 @@ public interface CandidatureRepository extends JpaRepository<Candidature, Long> 
                 .filter(c -> c.getStatut() == StatutCandidature.ELIMINE_CV )
                 .toList();
     }
+    @Query("SELECT c.dateDepot, COUNT(c) FROM Candidature c " +
+            "WHERE c.dateDepot >= :depuis " +
+            "GROUP BY c.dateDepot " +
+            "ORDER BY c.dateDepot ASC")
+    List<Object[]> countParJourDepuis(@Param("depuis") LocalDate depuis);
+
+    // Top sujets par nombre de candidatures
+    // row[0] = String (titre sujet), row[1] = Long (count)
+    @Query("SELECT c.sujet.titre, COUNT(c) FROM Candidature c " +
+            "GROUP BY c.sujet.titre " +
+            "ORDER BY COUNT(c) DESC")
+    List<Object[]> topSujetsByCandidatures();
 }

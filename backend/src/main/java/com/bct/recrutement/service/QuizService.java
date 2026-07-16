@@ -358,7 +358,6 @@ public class QuizService {
 
         Candidature candidature = candidatureRepository.findByCandidatIdAndSujetId(userId, sujetId).orElse(null);
         if (candidature == null) { result.put("eligible", false); result.put("reason", "Vous n'avez pas de candidature pour ce poste."); return result; }
-        if (!Boolean.TRUE.equals(candidature.getEmailCvEnvoye())) { result.put("eligible", false); result.put("reason", "Vous n'avez pas encore été autorisé à passer ce quiz."); return result; }
         if (candidature.getStatut() != Candidature.StatutCandidature.PRESELECTIONNE_CV) { result.put("eligible", false); result.put("reason", "Votre candidature ne vous permet pas d'accéder au quiz. Statut : " + candidature.getStatut().name()); return result; }
 
         Optional<QuizSession> session = sessionRepository.findByUserIdAndQuizId(userId, quizId);

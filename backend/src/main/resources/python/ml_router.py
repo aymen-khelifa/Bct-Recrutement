@@ -46,9 +46,14 @@ if not GROQ_API_KEY:
 else:
     print(f"[config] ✅ GROQ_API_KEY présent (modèle: {GROQ_MODEL})")
 
+# Clé dédiée au scheduler d'entretiens (GROQ1_API_KEY), fallback sur GROQ_API_KEY
+SCHEDULER_GROQ_KEY = GROQ1_API_KEY or GROQ_API_KEY
+if not SCHEDULER_GROQ_KEY:
+    print("[config] ⚠️  Aucune clé Groq pour le scheduler → /schedule désactivé")
+
 # ── Imports restants ───────────────────────────────────────────────────────────
 import numpy as np
-import pdfplumber
+import fitz  # PyMuPDF — utilisé pour toute extraction de texte PDF (RAG + CV Scorer)
 import chromadb
 from chromadb.config import Settings
 from PIL        import Image
@@ -109,6 +114,27 @@ def get_bert():
         log.info("✅ BERT scorer prêt (dim=%d)", dim)
     return _bert_model
 
+
+def preload_deepface():
+    """Précharge TensorFlow + les poids ArcFace en mémoire au démarrage du
+    service, pour éviter le délai de ~30s (chargement à froid) lors du
+    premier appel réel à /verify-face."""
+    try:
+        from deepface import DeepFace
+        dummy = (np.random.rand(100, 100, 3) * 255).astype("uint8")
+        path = os.path.join(tempfile.gettempdir(), "_warmup.jpg")
+        cv2.imwrite(path, dummy)
+        DeepFace.represent(img_path=path, model_name=FACE_MODEL,
+                           detector_backend="opencv", enforce_detection=False)
+        try:
+            os.unlink(path)
+        except Exception:
+            pass
+        log.info("✅ ArcFace préchargé")
+    except Exception as e:
+        log.warning("Préchargement ArcFace échoué : %s", e)
+
+
 # ── ChromaDB ───────────────────────────────────────────────────────────────────
 _chroma = chromadb.PersistentClient(
     path=CHROMA_DIR,
@@ -155,10 +181,11 @@ from sklearn.metrics.pairwise        import cosine_similarity
 def health():
     return jsonify({
         "status":         "ok",
-        "services":       ["quiz", "face", "cv-scorer", "cv-vector"],
+        "services":       ["quiz", "scheduler", "face", "cv-scorer", "cv-vector"],
         "cv_chunks":      _col_cv.count(),
         "fiches":         _col_fiches.count(),
         "groq":           bool(GROQ_API_KEY),
+        "scheduler_groq": bool(SCHEDULER_GROQ_KEY),
         "bert":           "fine-tuned" if MODEL_DIR.exists() else "base",
         "face_threshold": 0.72,
     }), 200
@@ -168,13 +195,38 @@ def health():
 #  ── SERVICE 1 : CV VECTOR RAG ────────────────────────────────────────────────
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _extraire_texte_pdf_bytes(source) -> str:
+    """Extraction PDF unifiée (PyMuPDF + fallback OCR Tesseract) — utilisée
+    à la fois par le service RAG (cv/index, cv/index-base64) et le CV Scorer
+    (/score), pour garantir un comportement d'extraction identique partout."""
+    try:
+        if isinstance(source, bytes):         doc = fitz.open(stream=source, filetype="pdf")
+        elif isinstance(source, (str, Path)): doc = fitz.open(str(source))
+        else:                                 doc = fitz.open(stream=source.read(), filetype="pdf")
+        pages = []
+        for page in doc:
+            t = page.get_text("text")
+            if len(t.strip()) < 30:
+                blocs = page.get_text("blocks")
+                t = " ".join(b[4] for b in blocs if len(b) > 4 and isinstance(b[4], str))
+            if len(t.strip()) < 30:
+                try:
+                    import pytesseract
+                    img = Image.open(io.BytesIO(page.get_pixmap(dpi=300).tobytes("png")))
+                    t   = pytesseract.image_to_string(img, lang="fra+eng", config="--psm 3")
+                except Exception:
+                    t = ""
+            pages.append(t)
+        doc.close()
+        return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", "\n".join(pages))).strip()
+    except Exception as e:
+        log.error("Extraction PDF : %s", e); return ""
+
+
 def _extraire_texte_url(url: str) -> str:
     resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
     resp.raise_for_status()
-    texte = ""
-    with pdfplumber.open(io.BytesIO(resp.content)) as pdf:
-        for page in pdf.pages:
-            texte += (page.extract_text() or "") + "\n"
+    texte = _extraire_texte_pdf_bytes(resp.content)
     texte = re.sub(r"[ \t]+", " ", texte)
     return re.sub(r"\n{3,}", "\n\n", texte).strip()
 
@@ -230,11 +282,10 @@ def cv_index_base64():
     if not cand_id or not pdf_b64:
         return jsonify({"error": "candidatureId et pdfBase64 requis"}), 400
     try:
-        texte = ""
-        with pdfplumber.open(io.BytesIO(base64.b64decode(pdf_b64))) as pdf:
-            for page in pdf.pages:
-                texte += (page.extract_text() or "") + "\n"
+        texte  = _extraire_texte_pdf_bytes(base64.b64decode(pdf_b64))
         texte  = re.sub(r"[ \t]+", " ", re.sub(r"\n{3,}", "\n\n", texte)).strip()
+        if not texte:
+            return jsonify({"error": "PDF vide"}), 422
         chunks = _chunker(texte)
         try: _col_cv.delete(where={"candidatureId": cand_id})
         except Exception: pass
@@ -491,6 +542,10 @@ def _quiz_completer_jusqu_a_50(all_questions, seen_texts, titre, departement, sp
 
     # Dernier recours : duplication si vraiment impossible d'atteindre 50
     if len(all_questions) < 50:
+        if not all_questions:
+            log.error("⚠️ Impossible de générer la moindre question — Groq indisponible")
+            return all_questions  # liste vide, on laisse l'appelant gérer
+
         manquantes = 50 - len(all_questions)
         log.warning("⚠️ Complétion par duplication (%d questions)", manquantes)
         base = all_questions.copy()
@@ -558,8 +613,120 @@ def quiz_generate():
 
     # Garantie finale : exactement 50
     all_questions = all_questions[:50]
+
+    if not all_questions:
+        log.error("[/generate] ❌ Aucune question générée — vérifier GROQ_API_KEY")
+        return jsonify({
+            "error": "Impossible de générer des questions — clé Groq invalide ou service indisponible"
+        }), 503
+
     log.info("[/generate] ✅ Total final : %d questions.", len(all_questions))
     return jsonify({"sujetId": sujet_id, "count": len(all_questions), "questions": all_questions})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  ── SERVICE 2bis : INTERVIEW SCHEDULER (Groq LLaMA) ──────────────────────────
+#  Génère un planning d'entretiens JSON à partir de candidats + contraintes
+#  horaires fournies par Java. Java garde la logique métier (BDD, validation,
+#  fallback, emails) — ce service ne fait QUE l'appel LLM.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_scheduler_groq = None
+if SCHEDULER_GROQ_KEY:
+    from groq import Groq as _GroqScheduler
+    _scheduler_groq = _GroqScheduler(api_key=SCHEDULER_GROQ_KEY)
+    log.info("✅ Client Groq scheduler prêt")
+
+
+def _schedule_build_prompt(data: dict) -> str:
+    heure_debut       = data.get("heureDebut", 9)
+    heure_fin         = data.get("heureFin", 17)
+    pause_debut       = data.get("pauseDebut", 12)
+    pause_fin         = data.get("pauseFin", 13)
+    duree_minutes     = data.get("dureeMinutes", 15)
+    battement_minutes = data.get("battementMinutes", 15)
+    pas_minutes       = duree_minutes + battement_minutes
+    creneaux_valides  = data.get("creneauxValides", [])
+    occupes_str       = data.get("occupesStr", "Aucun")
+    jours              = data.get("jours", [])
+    candidats_str      = data.get("candidatsStr", "")
+    nb_candidats        = data.get("nbCandidats", 0)
+    premier_jour        = jours[0] if jours else ""
+
+    return f"""Génère un planning d'entretiens RH (Banque Centrale de Tunisie).
+
+RÈGLES STRICTES :
+- Horaires de travail : de {heure_debut}h00 à {heure_fin}h00
+- PAUSE DÉJEUNER OBLIGATOIRE : AUCUN entretien entre {pause_debut}h00 et {pause_fin}h00
+- Durée de chaque entretien : {duree_minutes} minutes EXACTEMENT
+- Battement OBLIGATOIRE de {battement_minutes} minutes entre deux entretiens
+- Les entretiens commencent donc toutes les {pas_minutes} minutes
+- Un seul entretien à la fois (aucun chevauchement)
+- Trier les candidats par meilleur score quiz EN PREMIER
+- Remplir les jours dans l'ordre, du matin au soir
+- Ne JAMAIS dépasser {heure_fin}h00
+
+CRÉNEAUX HORAIRES VALIDES (utiliser dans cet ordre, par jour) :
+{"  ".join(creneaux_valides)}
+
+⛔ CRÉNEAUX DÉJÀ OCCUPÉS (ne JAMAIS réutiliser ces date+heure) :
+{occupes_str}
+
+Jours ouvrés disponibles : {", ".join(jours)}
+
+Candidats à planifier ({nb_candidats} au total) :
+{candidats_str}
+
+Réponds UNIQUEMENT avec un JSON valide. AUCUN texte avant ou après.
+Format exact :
+[{{"candidatureId":1,"debut":"{premier_jour}T09:00:00","fin":"{premier_jour}T09:15:00"}}]
+"""
+
+
+@app.route("/schedule", methods=["POST"])
+def schedule_generate():
+    if _scheduler_groq is None:
+        return jsonify({"error": "Clé Groq scheduler non configurée"}), 503
+
+    data = request.get_json(force=True) or {}
+    if not data.get("candidatsStr") or not data.get("jours"):
+        return jsonify({"error": "candidatsStr et jours requis"}), 400
+
+    prompt = _schedule_build_prompt(data)
+    log.info("[/schedule] %d candidat(s) | %d jour(s)",
+             data.get("nbCandidats", 0), len(data.get("jours", [])))
+
+    try:
+        completion = _scheduler_groq.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": (
+                    "Tu génères uniquement du JSON valide sans aucun texte autour. "
+                    "Tu respectes STRICTEMENT la pause déjeuner et les battements de 15 minutes."
+                )},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.1,
+            max_tokens=4000,
+        )
+        content = completion.choices[0].message.content.strip()
+
+        start = content.find("[")
+        end   = content.rfind("]")
+        if start == -1 or end == -1:
+            log.warning("[/schedule] Réponse Groq sans JSON exploitable")
+            return jsonify({"error": "Réponse Groq invalide", "planning": []}), 502
+
+        planning = json.loads(content[start:end + 1])
+        log.info("[/schedule] ✅ %d créneau(x) générés", len(planning))
+        return jsonify({"planning": planning}), 200
+
+    except json.JSONDecodeError as e:
+        log.error("[/schedule] JSON invalide : %s", e)
+        return jsonify({"error": "JSON invalide reçu de Groq", "planning": []}), 502
+    except Exception as e:
+        log.error("[/schedule] Erreur : %s", e, exc_info=True)
+        return jsonify({"error": str(e), "planning": []}), 500
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -844,33 +1011,6 @@ def _preprocess(texte: str, garder_phrases: bool = False) -> str:
     return " ".join(tokens)
 
 
-import fitz  # PyMuPDF
-
-def _extraire_texte_pdf_bytes(source) -> str:
-    try:
-        if isinstance(source, bytes):         doc = fitz.open(stream=source, filetype="pdf")
-        elif isinstance(source, (str, Path)): doc = fitz.open(str(source))
-        else:                                 doc = fitz.open(stream=source.read(), filetype="pdf")
-        pages = []
-        for page in doc:
-            t = page.get_text("text")
-            if len(t.strip()) < 30:
-                blocs = page.get_text("blocks")
-                t = " ".join(b[4] for b in blocs if len(b) > 4 and isinstance(b[4], str))
-            if len(t.strip()) < 30:
-                try:
-                    import pytesseract
-                    img = Image.open(io.BytesIO(page.get_pixmap(dpi=300).tobytes("png")))
-                    t   = pytesseract.image_to_string(img, lang="fra+eng", config="--psm 3")
-                except Exception:
-                    t = ""
-            pages.append(t)
-        doc.close()
-        return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", "\n".join(pages))).strip()
-    except Exception as e:
-        log.error("Extraction PDF : %s", e); return ""
-
-
 def _calculer_tfidf(texte_cv: str, texte_poste: str) -> float:
     cv_c = _preprocess(texte_cv); po_c = _preprocess(texte_poste)
     cv_n = _normaliser_accents(texte_cv).lower()[:3000]
@@ -965,49 +1105,149 @@ _NIVEAUX_DIPLOME = {
     "bts_dut":  (["bts","dut","bac+2"], 2),
     "bac":      (["baccalaureat","bac ","diplome de baccalaureat"], 1),
 }
+
+# Écoles reconnues et leur niveau, avec description (pour education score)
 _ECOLES_RECONNUES = {
-    "esprit":("ingenieur",4), "enit":("ingenieur",4), "insat":("ingenieur",4),
-    "supcom":("ingenieur",4), "ensi":("ingenieur",4), "isamm":("ingenieur",4),
-    "isi":("master",4), "isim":("master",4), "fst":("master",4), "ihec":("master",4),
-    "esb":("master",4), "isg":("licence",3), "fseg":("licence",3),
-    "polytechnique":("ingenieur",4), "centrale":("ingenieur",4),
-    "sorbonne":("master",4), "universitaire":("licence",3),
+    "esprit":       ("ingenieur", 4, "École Supérieure Privée d'Ingénierie"),
+    "enit":         ("ingenieur", 4, "École Nationale d'Ingénieurs de Tunis"),
+    "insat":        ("ingenieur", 4, "Institut National des Sciences Appliquées"),
+    "supcom":       ("ingenieur", 4, "École Supérieure des Communications"),
+    "ensi":         ("ingenieur", 4, "École Nationale des Sciences de l'Informatique"),
+    "isamm":        ("ingenieur", 4, "Institut Supérieur des Arts Multimédia"),
+    "isi":          ("master",    4, "Institut Supérieur d'Informatique"),
+    "isim":         ("master",    4, "Institut Supérieur d'Informatique de Monastir"),
+    "fst":          ("master",    4, "Faculté des Sciences et Techniques"),
+    "ihec":         ("master",    4, "Institut des Hautes Études Commerciales"),
+    "esb":          ("master",    4, "École Supérieure de Business"),
+    "isg":          ("licence",   3, "Institut Supérieur de Gestion"),
+    "fseg":         ("licence",   3, "Faculté des Sciences Économiques"),
+    "polytechnique":("ingenieur", 4, "École Polytechnique"),
+    "centrale":     ("ingenieur", 4, "École Centrale"),
+    "sorbonne":     ("master",    4, "Université Paris Sorbonne"),
+    "universitaire":("licence",   3, "Université"),
 }
 
-def _detecter_ecole(texte: str):
+def _detecter_ecole(texte: str) -> tuple:
+    """Retourne (label, niveau, description)."""
     t = _normaliser_accents(texte).lower()
-    for ecole, (label, niv) in _ECOLES_RECONNUES.items():
-        if ecole in t: return label, niv
-    return None, 0
+    for ecole, (label, niv, desc) in _ECOLES_RECONNUES.items():
+        if ecole in t:
+            return label, niv, desc
+    return None, 0, ""
+
+
+# ── Mots-clés domaines pour enrichir les projets ──────────────────────────────
+_DOMAINES_PROJETS = {
+    "hospitalier":   ["hospitalier","hopital","urgences","medical","sante","clinique",
+                      "patient","health","hospital","infirmier"],
+    "bancaire":      ["bancaire","banque","credit","finance","paiement","swift",
+                      "banking","financial","transaction","compte"],
+    "ecommerce":     ["ecommerce","vente","boutique","panier","commande","shop",
+                      "marketplace","produit","catalogue","prix"],
+    "education":     ["formation","cours","apprentissage","education","pedagogie",
+                      "etudiant","enseignement","plateforme lms","elearning"],
+    "securite":      ["securite","authentification","cybersecurite","pentest",
+                      "firewall","vulnerability","audit","iso 27001"],
+    "data":          ["analyse","tableau","dashboard","rapport","statistiques",
+                      "pipeline","etl","datawarehouse","bi","kpi"],
+}
+
+def _extraire_projets(texte: str) -> list:
+    """Extrait les projets du CV avec leur contexte domaine."""
+    t_lower = _normaliser_accents(texte).lower()
+    projets = []
+    patterns_projet = [
+        r'([A-Z][a-zA-Z0-9]+)\s*\(?(20\d{2})\)?.*?Technologies?[:]\s*([^\n]{10,100})',
+        r'[Pp]rojet\s+([^:\n]{3,30})\s*[:\-]\s*([^\n]{10,100})',
+    ]
+    for pattern in patterns_projet:
+        for m in re.finditer(pattern, texte):
+            nom = m.group(1).strip()
+            techno_str = m.group(len(m.groups())).strip()
+            techno = [t.strip() for t in re.split(r'[,;]', techno_str) if len(t.strip()) > 1]
+            domaine_projet = "autre"
+            for dom, mots in _DOMAINES_PROJETS.items():
+                if any(mo in t_lower for mo in mots):
+                    domaine_projet = dom
+                    break
+            if nom and len(nom) > 2:
+                projets.append({"nom": nom, "techno": techno[:5], "domaine": domaine_projet})
+    return projets[:5]
+
+
+def _extraire_experiences(texte: str) -> list:
+    """Extrait les expériences/stages du CV."""
+    pattern = r'[Ss]tage\s+(?:chez|at|@)?\s*([A-Z][A-Za-z0-9\s]{1,30})\s*\(([^)]+)\)'
+    experiences = []
+    for m in re.finditer(pattern, texte):
+        entreprise = m.group(1).strip()
+        periode    = m.group(2).strip()
+        mois = 2
+        mm = re.search(r'(\d+)/(\d{4})\s*[-–]\s*(\d+)/(\d{4})', periode)
+        if mm:
+            try:
+                m1, y1, m2, y2 = int(mm.group(1)), int(mm.group(2)), int(mm.group(3)), int(mm.group(4))
+                mois = max(1, (y2 - y1) * 12 + (m2 - m1))
+            except Exception:
+                pass
+        domaine_exp = "autre"
+        entreprise_lower = _normaliser_accents(entreprise).lower()
+        if any(b in entreprise_lower for b in ["bank","banque","bct","stb","biat","amen","attijari"]):
+            domaine_exp = "bancaire"
+        elif any(b in entreprise_lower for b in ["easysoft","soft","tech","digital","dev"]):
+            domaine_exp = "tech"
+        elif any(b in entreprise_lower for b in ["esprit","enit","insat","universite"]):
+            domaine_exp = "education"
+        experiences.append({"entreprise": entreprise, "duree_mois": mois, "domaine": domaine_exp})
+    return experiences[:4]
+
 
 def _extraire_infos(texte: str) -> dict:
-    t     = _normaliser_accents(texte).lower()
+    """Extraction complète des informations structurées du CV."""
+    t = _normaliser_accents(texte).lower()
+
     email = ""
     m = re.search(r"[\w.+\-]+@[\w.\-]+\.[a-z]{2,}", texte, re.I)
     if m: email = m.group(0)
     tel = ""
     m = re.search(r"(\+?\d[\d\s\-.(]{7,14}\d)", texte)
     if m: tel = re.sub(r"\s+", " ", m.group(0)).strip()
+
     niv, dip = 0, "Non précisé"
     for n, (mots, sc) in _NIVEAUX_DIPLOME.items():
         if any(mo in t for mo in mots) and sc > niv:
             niv = sc; dip = n.replace("_", "/").capitalize()
-    ecole_label, ecole_niv = _detecter_ecole(texte)
-    if ecole_niv > niv: niv = ecole_niv; dip = (ecole_label or "").capitalize()
+
+    ecole_label, ecole_niv, ecole_desc = _detecter_ecole(texte)
+    if ecole_niv > niv:
+        niv = ecole_niv
+        dip = (ecole_label or "").capitalize()
+
     mois = 0
     for mm in re.finditer(r"(\d+)\s*(an|ans|year|years)", t): mois += int(mm.group(1)) * 12
     for mm in re.finditer(r"(\d+)\s*(mois|month)", t):        mois += int(mm.group(1))
+
+    projets     = _extraire_projets(texte)
+    experiences = _extraire_experiences(texte)
+
     try:
         from langdetect import detect; langue = detect(texte[:500])
     except Exception: langue = "fr"
+
     return {
         "email": email, "telephone": tel, "langue": langue,
         "niveauDiplome": niv, "diplomeLabel": dip,
+        "ecoleDetectee": ecole_desc if ecole_desc else "",
         "moisExperience": min(mois, 120),
         "hasGithub":   "github" in t or "gitlab" in t,
         "hasLinkedin": "linkedin" in t,
         "nbMots":      len(texte.split()),
+        "projets":         projets,
+        "experiences":     experiences,
+        "nb_projets":      len(projets),
+        "nb_experiences":  len(experiences),
     }
+
 
 def _calculer_lettre(lettre: str, titre: str) -> float:
     if not lettre or len(lettre.strip()) < 50: return 0.0
@@ -1028,65 +1268,519 @@ def _calculer_lettre(lettre: str, titre: str) -> float:
     return round(min(score, 100) / 100, 4)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  MODULE NLP PUR — Extraction structurée sans LLM (porté de cv_scorer.py)
+# ══════════════════════════════════════════════════════════════════════════════
+
+_SECTION_PATTERNS = {
+    "formation": [
+        r"(?i)(formation|education|diplôme|diplome|études|etudes|academic)",
+        r"(?i)(université|universite|école|ecole|institut|faculty)",
+        r"(?i)(master|licence|ingénieur|ingenieur|bachelor|bts|dut)",
+    ],
+    "experience": [
+        r"(?i)(expérience|experience|stage|internship|emploi|poste|work)",
+        r"(?i)(chez|at|@|entreprise|company|société|societe)",
+    ],
+    "projets": [
+        r"(?i)(projet|project|réalisation|realisation|développement|developpement)",
+        r"(?i)(academic|personnel|professionnel|application|plateforme|système)",
+    ],
+    "competences": [
+        r"(?i)(compétence|competence|skill|technolog|maîtrise|maitrise)",
+        r"(?i)(langage|framework|outil|tool|stack|librairie)",
+    ],
+}
+
+def _detecter_sections(texte: str) -> dict:
+    """Détecte et extrait les sections du CV (formation/expérience/projets/...)."""
+    lignes   = texte.split("\n")
+    section_courante = "autre"
+    contenu_sections = {k: [] for k in _SECTION_PATTERNS}
+    contenu_sections["autre"] = []
+    for ligne in lignes:
+        nouvelle_section = None
+        for nom_section, patterns in _SECTION_PATTERNS.items():
+            if any(re.search(p, ligne) for p in patterns):
+                if len(ligne.strip()) < 40:
+                    nouvelle_section = nom_section
+                    break
+        if nouvelle_section:
+            section_courante = nouvelle_section
+        else:
+            contenu_sections[section_courante].append(ligne)
+    return {k: " ".join(v) for k, v in contenu_sections.items()}
+
+
+_ECOLES_NER = {
+    "esprit": "SCHOOL_ENGINEER",   "enit": "SCHOOL_ENGINEER",
+    "insat":  "SCHOOL_ENGINEER",   "supcom": "SCHOOL_ENGINEER",
+    "ensi":   "SCHOOL_ENGINEER",   "ihec": "SCHOOL_BUSINESS",
+    "isg":    "SCHOOL_BUSINESS",   "fseg": "SCHOOL_BUSINESS",
+    "isi":    "SCHOOL_IT",         "isim": "SCHOOL_IT",
+    "fst":    "SCHOOL_SCIENCE",    "isamm": "SCHOOL_MEDIA",
+    "polytechnique": "SCHOOL_ENGINEER", "centrale": "SCHOOL_ENGINEER",
+    "sorbonne":      "SCHOOL_GENERAL",  "grenoble": "SCHOOL_GENERAL",
+    "al manahel":    "SCHOOL_GENERAL",
+    "fsegs":         "SCHOOL_ECONOMICS",
+    "fseg sfax":     "SCHOOL_ECONOMICS",
+    "fseg tunis":    "SCHOOL_ECONOMICS",
+    "iscae":         "SCHOOL_MANAGEMENT",
+    "higher institute": "SCHOOL_GENERAL",
+}
+
+_ENTREPRISES_NER = {
+    "bct": "BANK_CENTRAL",   "stb": "BANK",     "biat": "BANK",
+    "amen bank": "BANK",     "attijari": "BANK", "tsb": "BANK",
+    "bh bank": "BANK",       "ubci": "BANK",
+    "easysoft": "TECH_COMPANY", "telnet": "TECH_COMPANY",
+    "vermeg": "TECH_COMPANY",   "sofrecom": "TECH_COMPANY",
+    "microsoft": "BIG_TECH",  "google": "BIG_TECH",
+    "amazon": "BIG_TECH",     "facebook": "BIG_TECH",
+}
+
+_TECH_STACK_NER = {
+    "react": "FRONTEND",    "angular": "FRONTEND",  "vue": "FRONTEND",
+    "html": "FRONTEND",     "css": "FRONTEND",       "typescript": "FRONTEND",
+    "spring boot": "BACKEND", "node": "BACKEND",     "django": "BACKEND",
+    "laravel": "BACKEND",     "symfony": "BACKEND",  "express": "BACKEND",
+    "mysql": "DATABASE",    "mongodb": "DATABASE",  "postgresql": "DATABASE",
+    "firebase": "DATABASE", "redis": "DATABASE",
+    "docker": "DEVOPS",     "kubernetes": "DEVOPS", "jenkins": "DEVOPS",
+    "aws": "CLOUD",         "azure": "CLOUD",       "gcp": "CLOUD",
+    "python": "ML_LANG",    "tensorflow": "ML_FRAMEWORK",
+    "pytorch": "ML_FRAMEWORK", "bert": "ML_MODEL",
+    "scikit": "ML_LIB",     "pandas": "ML_LIB",
+}
+
+def _extraire_entites_ner(texte: str) -> dict:
+    """NER léger basé sur dictionnaires et règles (sans spaCy)."""
+    t = _normaliser_accents(texte).lower()
+    entites = {"ecoles": [], "entreprises": [], "technologies": [], "dates": [], "niveau": None}
+    for ecole, label in _ECOLES_NER.items():
+        if ecole in t:
+            entites["ecoles"].append({"nom": ecole, "type": label})
+            if "ENGINEER" in label and entites["niveau"] is None:
+                entites["niveau"] = "ingenieur"
+            elif "BUSINESS" in label and entites["niveau"] is None:
+                entites["niveau"] = "master"
+    for ent, label in _ENTREPRISES_NER.items():
+        if ent in t:
+            entites["entreprises"].append({"nom": ent, "type": label})
+    for tech, categorie in _TECH_STACK_NER.items():
+        if tech in t:
+            entites["technologies"].append({"nom": tech, "categorie": categorie})
+    entites["dates"] = sorted(set(re.findall(r"20\d{2}", texte)))
+    return entites
+
+
+_DOMAINES_REFERENCE = {
+    "fullstack_web": (
+        "développement web fullstack React.js Node.js Spring Boot Docker MongoDB MySQL "
+        "JavaScript TypeScript HTML CSS REST API microservices CI/CD Jenkins Git "
+        "application gestion génie logiciel développement informatique"
+    ),
+    "ml_nlp": (
+        "machine learning NLP Python TensorFlow PyTorch BERT transformers scikit-learn "
+        "pandas numpy deep learning classification neural network embedding "
+        "intelligence artificielle IA prévision modèle données tunisiennes"
+    ),
+    "devops_cloud": (
+        "DevOps cloud AWS Azure Kubernetes Docker Jenkins Terraform Ansible Linux "
+        "CI/CD pipeline monitoring Prometheus Grafana infrastructure automation"
+    ),
+    "data_analyst": (
+        "data analyst SQL Excel Power BI Tableau Python pandas statistiques reporting "
+        "dashboard ETL data pipeline business intelligence KPI visualisation "
+        "big data méthodes quantitatives prévision économétrique"
+    ),
+    "econometrie": (
+        "économétrie modèle VAR ARIMA prévision séries temporelles régression "
+        "analyse statistique macroéconomique taux change inflation croissance "
+        "méthodes quantitatives finance économique Tunisie données bancaires"
+    ),
+    "finance_audit": (
+        "finance audit comptabilité bancaire IFRS risques crédit Excel VBA reporting "
+        "modélisation financière conformité réglementaire Basel SEPA Swift "
+        "politique monétaire liquidité dette publique inclusion financière"
+    ),
+    "audit_interne": (
+        "audit interne gouvernance risques opérationnels contrôle interne "
+        "recommandations audit conformité gestion risques banque centrale "
+        "management système information audit systèmes"
+    ),
+    "economie_finance": (
+        "économie monétaire finance inclusion financière crowdfunding e-wallet "
+        "paiement numérique taux change dette ménages croissance économique "
+        "développement durable RSE politique macroéconomique Tunisie banque"
+    ),
+    "cybersecurity": (
+        "cybersécurité sécurité pentest Linux firewall ISO 27001 RGPD SIEM "
+        "cryptographie SSL TLS audit vulnérabilité réseau"
+    ),
+    "communication": (
+        "communication digitale marketing RSE stratégie communication interne "
+        "cohésion organisationnelle supports numériques multimédia branding"
+    ),
+}
+
+def _classifier_domaine_bert(texte_cv: str) -> tuple:
+    """Classification zero-shot du domaine du CV par similarité cosine BERT."""
+    try:
+        bert    = get_bert()
+        cv_enc  = bert.encode(texte_cv[:1000], normalize_embeddings=True, show_progress_bar=False)
+        meilleur_domaine, meilleur_score = "autre", 0.0
+        for domaine, description in _DOMAINES_REFERENCE.items():
+            ref_enc = bert.encode(description, normalize_embeddings=True, show_progress_bar=False)
+            score = float(cv_enc @ ref_enc)
+            if score > meilleur_score:
+                meilleur_score, meilleur_domaine = score, domaine
+        return meilleur_domaine, round(meilleur_score, 4)
+    except Exception as e:
+        log.debug("Classification domaine : %s", e)
+        return "autre", 0.0
+
+
+def _calculer_score_structurel_nlp(texte_cv: str, texte_poste: str, competences: list) -> dict:
+    """Score structurel 100% NLP : NER skills + domaine BERT + projets + formation + exp."""
+    ner_cv    = _extraire_entites_ner(texte_cv)
+    ner_poste = _extraire_entites_ner(texte_poste)
+
+    cv_techs    = {e["nom"] for e in ner_cv["technologies"]}
+    poste_techs = {e["nom"] for e in ner_poste["technologies"]}
+    ner_match = round(len(cv_techs & poste_techs) / len(poste_techs), 4) if poste_techs else 0.5
+
+    domaine_cv,    conf_cv    = _classifier_domaine_bert(texte_cv[:800])
+    domaine_poste, conf_poste = _classifier_domaine_bert(texte_poste[:500])
+    alignement_domaine = 1.0 if domaine_cv == domaine_poste else 0.3
+
+    niv_labels  = {"ingenieur": 1.0, "master": 0.9, "licence": 0.7, None: 0.6}
+    score_forma = niv_labels.get(ner_cv.get("niveau"), 0.6)
+
+    nb_exp    = len(ner_cv["entreprises"])
+    score_exp = min(1.0, 0.4 + nb_exp * 0.2)
+
+    sections_cv   = _detecter_sections(texte_cv)
+    projets_texte = sections_cv.get("projets", "")
+    score_projets = 0.5
+    if projets_texte.strip():
+        try:
+            bert = get_bert()
+            v = bert.encode([projets_texte[:400], texte_poste[:400]],
+                            normalize_embeddings=True, show_progress_bar=False)
+            score_projets = float(max(0.0, v[0] @ v[1]))
+        except Exception:
+            pass
+
+    score_global = (
+        0.30 * ner_match +
+        0.25 * alignement_domaine +
+        0.20 * score_projets +
+        0.15 * score_forma +
+        0.10 * score_exp
+    )
+
+    log.info("Score structurel NLP : ner=%.2f dom=%.2f proj=%.2f forma=%.2f exp=%.2f → %.3f",
+             ner_match, alignement_domaine, score_projets, score_forma, score_exp, score_global)
+
+    return {
+        "score": round(score_global, 4),
+        "details": {
+            "ner_skills_match":  round(ner_match, 3),
+            "domaine_alignment": round(alignement_domaine, 3),
+            "projets_bert":      round(score_projets, 3),
+            "formation_niveau":  round(score_forma, 3),
+            "experience_score":  round(score_exp, 3),
+        },
+        "entites": {
+            "domaine_cv":      domaine_cv,
+            "domaine_poste":   domaine_poste,
+            "ecoles":          [e["nom"] for e in ner_cv["ecoles"]],
+            "entreprises":     [e["nom"] for e in ner_cv["entreprises"]],
+            "technologies_cv": list(cv_techs)[:10],
+            "niveau_detecte":  ner_cv.get("niveau", "non détecté"),
+        },
+        "methode": "NLP_PUR_BERT_NER_RULES",
+    }
+
+
+def _calculer_experience_score(texte_cv: str, competences: List[str]) -> dict:
+    """Score expérience 0→1 : stages, projets, GitHub, pertinence bancaire."""
+    t = _normaliser_accents(texte_cv).lower()
+
+    experiences  = _extraire_experiences(texte_cv)
+    nb_stages    = len(experiences)
+    duree_totale = min(sum(e.get("duree_mois", 2) for e in experiences), 24)
+    score_stages = min(0.40, nb_stages * 0.08 + duree_totale * 0.02)
+
+    projets       = _extraire_projets(texte_cv)
+    nb_projets    = len(projets)
+    score_projets = min(0.25, nb_projets * 0.07)
+
+    has_github    = "github" in t or "gitlab" in t
+    has_portfolio = "portfolio" in t
+    score_github  = 0.10 if has_github else (0.05 if has_portfolio else 0.0)
+
+    mots_bancaires = ["banque","bank","bct","stb","biat","tsb","attijari",
+                      "amen","finance","audit","comptabilite","tresorerie"]
+    has_bancaire   = any(m in t for m in mots_bancaires)
+    score_bancaire = 0.15 if has_bancaire else 0.0
+
+    comp_norm   = {_normaliser_accents(c).lower() for c in competences}
+    techs_stage = set()
+    for exp in experiences:
+        for tech in exp.get("techno", []):
+            techs_stage.add(_normaliser_accents(tech).lower())
+    overlap_stage     = len(comp_norm & techs_stage) / max(len(comp_norm), 1)
+    score_tech_stage  = min(0.10, overlap_stage * 0.10)
+
+    score_exp = min(1.0, score_stages + score_projets + score_github + score_bancaire + score_tech_stage)
+
+    log.info("ExperienceScore=%.3f | stages=%d(%.1fmois) projets=%d github=%s bancaire=%s",
+             score_exp, nb_stages, duree_totale, nb_projets,
+             "✅" if has_github else "❌", "✅" if has_bancaire else "❌")
+
+    return {
+        "score":        round(score_exp, 4),
+        "nb_stages":    nb_stages,
+        "duree_mois":   duree_totale,
+        "nb_projets":   nb_projets,
+        "has_github":   has_github,
+        "has_bancaire": has_bancaire,
+        "score_detail": {
+            "stages":     round(score_stages, 3),
+            "projets":    round(score_projets, 3),
+            "github":     round(score_github, 3),
+            "bancaire":   round(score_bancaire, 3),
+            "tech_stage": round(score_tech_stage, 3),
+        }
+    }
+
+
+_NIVEAU_SCORE = {
+    "doctorat": 1.00, "ingenieur": 0.90, "master": 0.85, "licence": 0.65,
+    "bts/dut": 0.45, "bac": 0.25, None: 0.40,
+}
+
+_SPECIALITES_BCT = {
+    "informatique":        {"fullstack_web":1.0, "ml_nlp":0.9, "devops_cloud":0.9},
+    "genie logiciel":      {"fullstack_web":1.0, "ml_nlp":0.7, "devops_cloud":0.8},
+    "intelligence artificielle": {"ml_nlp":1.0, "data_analyst":0.8, "fullstack_web":0.5},
+    "data science":        {"ml_nlp":1.0, "data_analyst":1.0, "econometrie":0.7},
+    "reseaux":             {"devops_cloud":0.9, "cybersecurity":0.9},
+    "cybersecurite":       {"cybersecurity":1.0, "audit_interne":0.6},
+    "finance":             {"finance_audit":1.0, "econometrie":0.8, "economie_finance":0.9},
+    "econometrie":         {"econometrie":1.0, "finance_audit":0.8, "data_analyst":0.7},
+    "economie":            {"finance_audit":0.9, "econometrie":0.9, "economie_finance":1.0},
+    "audit":               {"audit_interne":1.0, "finance_audit":0.9},
+    "comptabilite":        {"finance_audit":0.9, "audit_interne":0.8},
+    "communication":       {"communication":1.0, "data_analyst":0.5},
+    "marketing":           {"communication":1.0, "data_analyst":0.6},
+}
+
+def _calculer_education_score(texte_cv: str, domaine_poste: str = "fullstack_web") -> dict:
+    """Score formation 0→1 : niveau diplôme, école reconnue, spécialité, certifs."""
+    t = _normaliser_accents(texte_cv).lower()
+
+    niv_label, niv_num, _ = _detecter_ecole(texte_cv)
+    niveau_detecte = None
+    for niv, (mots, _) in _NIVEAUX_DIPLOME.items():
+        if any(mo in t for mo in mots):
+            niveau_detecte = niv
+            break
+    if niv_label and niveau_detecte is None:
+        niveau_detecte = niv_label
+    score_niveau = _NIVEAU_SCORE.get(niveau_detecte, 0.40)
+
+    ecole_label, ecole_niv, ecole_desc = _detecter_ecole(texte_cv)
+    if ecole_desc:
+        score_ecole = 1.0 if ecole_niv >= 4 else (0.70 if ecole_niv == 3 else 0.50)
+    else:
+        score_ecole = 0.50 if any(u in t for u in ["universite","university","faculte","faculty"]) else 0.0
+
+    score_specialite = 0.50
+    for specialite, alignements in _SPECIALITES_BCT.items():
+        if specialite in t:
+            align = alignements.get(domaine_poste, 0.30)
+            if align > score_specialite:
+                score_specialite = align
+
+    certifs = ["certification","certified","aws","azure","cisco","pmp",
+               "scrum","agile","toefl","ielts","double diplome","double degree"]
+    nb_certifs   = sum(1 for c in certifs if c in t)
+    score_certif = min(0.15, nb_certifs * 0.05)
+
+    score_edu = min(1.0,
+        0.40 * score_niveau +
+        0.30 * score_ecole +
+        0.20 * score_specialite +
+        0.10 * (score_certif / 0.15 if score_certif > 0 else 0)
+    )
+
+    log.info("EducationScore=%.3f | niveau=%s école=%s spécialité=%.2f certifs=%d",
+             score_edu, niveau_detecte or "?", ecole_desc[:20] if ecole_desc else "?",
+             score_specialite, nb_certifs)
+
+    return {
+        "score":          round(score_edu, 4),
+        "niveau_detecte": niveau_detecte or "non détecté",
+        "ecole_detectee": ecole_desc or "non détectée",
+        "score_detail": {
+            "niveau":         round(score_niveau, 3),
+            "ecole":          round(score_ecole, 3),
+            "specialite":     round(score_specialite, 3),
+            "certifications": round(score_certif, 3),
+        }
+    }
+
+
 _DOMAINES_BOOST = {
-    "fullstack_web": {"cv": ["react","node","javascript","typescript","spring","docker","mongodb","mysql","angular","api"],
-                      "job": ["full stack","fullstack","web","react","node","javascript","spring boot","gestion","backend","frontend"], "bonus": 8.0},
-    "ml_nlp":        {"cv": ["python","tensorflow","pytorch","bert","nlp","machine learning","sklearn"],
-                      "job": ["machine learning","nlp","bert","deep learning","ia","intelligence artificielle"], "bonus": 8.0},
-    "devops_cloud":  {"cv": ["docker","kubernetes","aws","azure","jenkins","terraform","linux"],
-                      "job": ["devops","cloud","kubernetes","docker","ci/cd","infrastructure"], "bonus": 8.0},
-    "data_analyst":  {"cv": ["sql","pandas","power bi","tableau","excel","python","statistiques"],
-                      "job": ["data analyst","bi","reporting","tableau","power bi","sql","analytics"], "bonus": 7.0},
-    "finance":       {"cv": ["audit","comptabilite","ifrs","finance","excel","vba","bilan"],
-                      "job": ["audit","finance","comptable","ifrs","risque","credit"], "bonus": 7.0},
-    "cybersecurity": {"cv": ["securite","pentest","linux","firewall","iso 27001","siem","reseau"],
-                      "job": ["securite","cybersecurite","pentest","audit securite","siem"], "bonus": 7.0},
-    "econometrie":   {"cv": ["econometrie","statistiques","var","arima","r","python","matlab","regression"],
-                      "job": ["econometrie","var","arima","prevision","macroeconomique","taux change","liquidite"], "bonus": 7.0},
-    "audit_interne": {"cv": ["audit","conformite","risques","gouvernance","controle","ifrs","bale","compliance"],
-                      "job": ["audit interne","gouvernance","risques operationnels","controle interne","banque centrale"], "bonus": 7.0},
-    "genie_logiciel":{"cv": ["java","spring","python","sql","mysql","postgresql","git","application","gestion","docker"],
-                      "job": ["application","gestion","genie logiciel","developpement","systeme information"], "bonus": 7.0},
+    "fullstack_web": {
+        "cv_keys":  ["react","node","javascript","typescript","spring","docker",
+                     "mongodb","mysql","angular","express","nestjs","api","rest"],
+        "job_keys": ["full stack","fullstack","web","react","node","javascript",
+                     "spring boot","gestion","hospitaliere","plateforme","backend","frontend"],
+        "bonus": 8.0,
+    },
+    "ml_nlp": {
+        "cv_keys":  ["python","tensorflow","pytorch","bert","nlp","machine learning","sklearn"],
+        "job_keys": ["machine learning","nlp","bert","deep learning","ia","intelligence artificielle"],
+        "bonus": 8.0,
+    },
+    "devops_cloud": {
+        "cv_keys":  ["docker","kubernetes","aws","azure","jenkins","terraform","linux"],
+        "job_keys": ["devops","cloud","kubernetes","docker","ci/cd","infrastructure"],
+        "bonus": 8.0,
+    },
+    "data_analyst": {
+        "cv_keys":  ["sql","pandas","power bi","tableau","excel","python","statistiques"],
+        "job_keys": ["data analyst","bi","reporting","tableau","power bi","sql","analytics"],
+        "bonus": 7.0,
+    },
+    "finance": {
+        "cv_keys":  ["audit","comptabilite","ifrs","finance","excel","vba","bilan"],
+        "job_keys": ["audit","finance","comptable","ifrs","risque","credit"],
+        "bonus": 7.0,
+    },
+    "cybersecurity": {
+        "cv_keys":  ["securite","pentest","linux","firewall","iso 27001","siem","reseau"],
+        "job_keys": ["securite","cybersecurite","pentest","audit securite","siem"],
+        "bonus": 7.0,
+    },
+    "econometrie": {
+        "cv_keys":  ["econometrie","statistiques","var","arima","r","python","matlab",
+                     "series temporelles","regression","prevision","modelisation"],
+        "job_keys": ["econometrie","var","arima","prevision","macroeconomique",
+                     "taux change","politique monetaire","liquidite","dette"],
+        "bonus": 7.0,
+    },
+    "audit_interne": {
+        "cv_keys":  ["audit","conformite","risques","gouvernance","controle",
+                     "ifrs","bale","compliance","gestion risques"],
+        "job_keys": ["audit interne","gouvernance","risques operationnels",
+                     "controle interne","recommandations audit","banque centrale"],
+        "bonus": 7.0,
+    },
+    "economie_bancaire": {
+        "cv_keys":  ["economie","finance","banque","monetaire","credit","inflation",
+                     "macro","microeconomie","developpement","croissance"],
+        "job_keys": ["economie monetaire","politique monetaire","inclusion financiere",
+                     "dette publique","taux change","balance courante","liquidite"],
+        "bonus": 6.0,
+    },
+    "genie_logiciel": {
+        "cv_keys":  ["java","spring","python","sql","mysql","postgresql","git",
+                     "application","gestion","backend","api","rest","docker"],
+        "job_keys": ["application","gestion","genie logiciel","developpement",
+                     "swift","tableau bord","bct","systeme information"],
+        "bonus": 7.0,
+    },
 }
 
 def _domain_boost(texte_cv: str, texte_poste: str) -> float:
-    cv_l = _normaliser_accents(texte_cv).lower()
-    po_l = _normaliser_accents(texte_poste).lower()
-    best = 0.0
+    """Bonus domaine (0→8 pts) : récompense quand le domaine du CV matche le poste."""
+    cv_lower    = _normaliser_accents(texte_cv).lower()
+    poste_lower = _normaliser_accents(texte_poste).lower()
+    meilleur_bonus = 0.0
     for cfg in _DOMAINES_BOOST.values():
-        cv_m  = sum(1 for k in cfg["cv"]  if k in cv_l)
-        job_m = sum(1 for k in cfg["job"] if k in po_l)
-        if cv_m >= 2 and job_m >= 1:
-            ratio = min(1.0, (cv_m + job_m) / (len(cfg["cv"]) + len(cfg["job"])) * 3)
+        cv_matches  = sum(1 for k in cfg["cv_keys"]  if k in cv_lower)
+        job_matches = sum(1 for k in cfg["job_keys"] if k in poste_lower)
+        if cv_matches >= 2 and job_matches >= 1:
+            ratio = min(1.0, (cv_matches + job_matches) /
+                        (len(cfg["cv_keys"]) + len(cfg["job_keys"])) * 3)
             bonus = cfg["bonus"] * ratio
-            if bonus > best: best = bonus
-    return round(best, 2)
+            if bonus > meilleur_bonus:
+                meilleur_bonus = bonus
+    return round(meilleur_bonus, 2)
 
 
 def _scorer_cv(texte_cv: str, titre: str, description: str,
                competences: List[str], lettre: str = "") -> dict:
-    texte_poste  = f"{titre} {description} {' '.join(competences)}"
-    tfidf_sim    = _calculer_tfidf(texte_cv, texte_poste)
-    bert_scores  = _calculer_bert(texte_cv, titre, description, competences)
-    bert_sim     = bert_scores["global"]
-    bert_desc    = bert_scores["description"]
-    skills       = _calculer_skills(texte_cv, competences)
-    lettre_norm  = _calculer_lettre(lettre, titre)
-    infos        = _extraire_infos(texte_cv)
-    semantic     = 0.75 * bert_desc + 0.25 * tfidf_sim
+    """Pipeline complet NLP+BERT (7 étapes, porté de cv_scorer.py) → score /100."""
+
+    texte_poste = f"{titre} {description} {' '.join(competences)}"
+
+    tfidf_sim   = _calculer_tfidf(texte_cv, texte_poste)
+    bert_scores = _calculer_bert(texte_cv, titre, description, competences)
+    bert_sim    = bert_scores["global"]
+    skills      = _calculer_skills(texte_cv, competences)
+    lettre_norm = _calculer_lettre(lettre, titre)
+
+    struct_result = _calculer_score_structurel_nlp(texte_cv, texte_poste, competences)
+    score_str     = struct_result["score"]
+
+    exp_result = _calculer_experience_score(texte_cv, competences)
+    exp_score  = exp_result["score"]
+
+    domaine_poste, _ = _classifier_domaine_bert(texte_poste[:400])
+    edu_result = _calculer_education_score(texte_cv, domaine_poste)
+    edu_score  = edu_result["score"]
+
+    bert_desc_sim  = bert_scores["description"]
+    skills_norm    = skills["ratio"]
+    semantic_score = 0.75 * bert_desc_sim + 0.25 * tfidf_sim
+
+    infos = _extraire_infos(texte_cv)
+
     domain_bonus = min(5.0, _domain_boost(texte_cv, texte_poste) * 0.5)
-    raw = (0.40 * semantic + 0.35 * skills["ratio"] + 0.15 * lettre_norm +
-           0.10 * (0.5 + 0.1 * min(5, infos["niveauDiplome"])))
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  FORMULE FINALE RH — 5 critères académiques (identique à cv_scorer.py)
+    #  FINAL = 0.35×Semantic + 0.25×Skills + 0.20×Experience
+    #        + 0.10×Education + 0.05×Structure + 0.05×Lettre + DomainBoost
+    # ══════════════════════════════════════════════════════════════════════
+    raw = (0.35 * semantic_score +
+           0.25 * skills_norm +
+           0.20 * exp_score +
+           0.10 * edu_score +
+           0.05 * score_str +
+           0.05 * lettre_norm)
+
     raw_pct = raw * 100
     if   raw_pct < 20: raw_pct = raw_pct * 1.10
     elif raw_pct > 85: raw_pct = 85 + (raw_pct - 85) * 0.50
-    score  = round(min(100.0, max(0.0, raw_pct + domain_bonus)), 1)
+
+    score = round(min(100.0, max(0.0, raw_pct + domain_bonus)), 1)
+
+    log.info("Score=%.1f | Sem=%.3f Ski=%.3f Exp=%.3f Edu=%.3f Str=%.3f Let=%.3f Boost=+%.1f",
+             score, semantic_score, skills_norm, exp_score, edu_score, score_str, lettre_norm, domain_bonus)
+
     compat = "Élevée" if score >= 75 else "Moyenne" if score >= 50 else "Faible"
     if   score >= 80: reco = "Hautement recommandé"
     elif score >= 65: reco = "Recommandé"
     elif score >= 50: reco = "Profil intéressant"
     elif score >= 35: reco = "Profil partiel"
     else:             reco = "Non adapté"
+
+    detail = {
+        "semantique":  round(min(35, semantic_score * 35), 1),
+        "competences": round(min(25, skills_norm * 25), 1),
+        "experience":  round(min(20, exp_score * 20), 1),
+        "formation":   round(min(10, edu_score * 10), 1),
+        "structure":   round(min(5,  score_str * 5), 1),
+        "lettre":      round(min(5,  lettre_norm * 5), 1),
+    }
+
     forts, faibles = [], []
     if bert_sim >= 0.65:     forts.append(f"Forte cohérence sémantique BERT ({bert_sim:.2f})")
     elif bert_sim < 0.35:    faibles.append(f"Faible similarité sémantique ({bert_sim:.2f})")
@@ -1095,36 +1789,46 @@ def _scorer_cv(texte_cv: str, titre: str, description: str,
     if skills["presentes"]:  forts.append(f"Compétences présentes : {', '.join(skills['presentes'][:4])}")
     if skills["manquantes"]: faibles.append(f"Compétences manquantes : {', '.join(skills['manquantes'][:3])}")
     if infos["hasGithub"]:   forts.append("Portfolio GitHub/GitLab présent")
-    log.info("Score=%.1f | Sem=%.3f Ski=%.3f Let=%.3f Boost=+%.1f",
-             score, semantic, skills["ratio"], lettre_norm, domain_bonus)
+    if infos["moisExperience"] >= 12: forts.append(f"~{infos['moisExperience']} mois d'expérience")
+
     return {
-        "scoreTotal": score, "compatibilite": compat, "recommandation": reco,
+        "scoreTotal":            score,
+        "compatibilite":         compat,
+        "recommandation":        reco,
         "scoreLettreMotivation": round(lettre_norm * 100),
-        "detail": {
-            "semantique":  round(min(40, semantic * 40), 1),
-            "competences": round(min(35, skills["ratio"] * 35), 1),
-            "lettre":      round(min(15, lettre_norm * 15), 1),
-            "formation":   round(min(10, infos["niveauDiplome"] * 2.0), 1),
-        },
+        "detail": detail,
         "rapport": {
-            "pts_forts":  forts or ["Dossier soumis"], "pts_faibles": faibles or [],
+            "pts_forts":  forts or ["Dossier soumis"],
+            "pts_faibles": faibles or [],
             "resume": (f"Score NLP+BERT : {score}/100 ({compat}). "
                        f"BERT={bert_sim:.3f} TF-IDF={tfidf_sim:.3f} "
                        f"Skills={len(skills['presentes'])}/{skills['total']}."),
-            "recommandation": reco,
+            "recommandation":      reco,
+            "questions_entretien": [],
         },
         "formule": {
-            "bert_similarity":    round(bert_sim,        4),
-            "tfidf_similarity":   round(tfidf_sim,       4),
+            "bert_similarity":    round(bert_sim, 4),
+            "tfidf_similarity":   round(tfidf_sim, 4),
             "skills_match_ratio": round(skills["ratio"], 4),
-            "lettre_score":       round(lettre_norm,     4),
+            "lettre_score":       round(lettre_norm, 4),
             "domain_boost":       domain_bonus,
-            "calcul": (f"(0.40×Semantic={semantic:.3f} + 0.35×Skills={skills['ratio']:.3f}"
-                       f" + 0.15×Lettre={lettre_norm:.3f} + 0.10×Formation"
-                       f" + DomainBoost={domain_bonus:.1f}) × 100 = {score}"),
+            "calcul": (
+                f"(0.35×Semantic={semantic_score:.3f}"
+                f" + 0.25×Skills={skills_norm:.3f}"
+                f" + 0.20×Experience={exp_score:.3f}"
+                f" + 0.10×Education={edu_score:.3f}"
+                f" + 0.05×Structure={score_str:.3f}"
+                f" + 0.05×Lettre={lettre_norm:.3f}"
+                f" + DomainBoost={domain_bonus:.1f}) × 100 = {score}"
+            ),
             "modele": "bert-fine-tuned-bct" if MODEL_DIR.exists() else "bert-base",
         },
-        "bert_scores": bert_scores, "skills": skills, "informations": infos,
+        "bert_scores":    bert_scores,
+        "skills":         skills,
+        "informations":   infos,
+        "nlp_structurel": struct_result,
+        "experience":     exp_result,
+        "education":      edu_result,
     }
 
 
@@ -1172,5 +1876,6 @@ if __name__ == "__main__":
     log.info("   Services : Quiz (Groq) | Face (ArcFace) | CV-Scorer (BERT) | CV-Vector (ChromaDB)")
     log.info("   BERT     : %s", "fine-tuned" if MODEL_DIR.exists() else "base multilingue")
     log.info("   Groq     : %s", "✅ prêt" if GROQ_API_KEY else "⚠️  GROQ_API_KEY manquant")
-    get_bert()  # précharger BERT au démarrage
+    get_bert()         # précharger BERT au démarrage
+    preload_deepface() # précharger ArcFace/DeepFace au démarrage (évite ~30s au 1er candidat)
     app.run(host="0.0.0.0", port=PORT, debug=False, threaded=True)

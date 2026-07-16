@@ -26,7 +26,9 @@ public class FiltrageService {
     @Autowired private EntretienRepository entretienRepository;
     @Autowired
     private CandidatureRepository candidatureRepository;
-
+    @Autowired
+    @Lazy
+    private NotificationService notificationService;
     @Autowired
     private SujetStageRepository sujetStageRepository;
 
@@ -39,7 +41,7 @@ public class FiltrageService {
     private InterviewSchedulerService interviewSchedulerService;
     @Autowired private RestTemplate restTemplate;
     @Autowired private ObjectMapper objectMapper;
-    @Value("${groq1.api.key}")
+    @Value("${groq.api.key}")
     private String groqApiKey;
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -134,7 +136,24 @@ public class FiltrageService {
                     : StatutCandidature.ELIMINE_CV);
         }
         candidatureRepository.saveAll(candidatures);
-
+// ── Notifications temps réel ──────────────────────────────────────────
+        for (Candidature c : candidatures) {
+            if (c.getStatut() == StatutCandidature.PRESELECTIONNE_CV) {
+                notificationService.envoyer(
+                        c.getCandidat().getId(),
+                        "PRESELECTIONNE_CV",
+                        "CV présélectionné !",
+                        "Votre CV pour " + c.getSujet().getTitre() + " a été présélectionné. Le quiz technique est disponible."
+                );
+            } else if (c.getStatut() == StatutCandidature.ELIMINE_CV) {
+                notificationService.envoyer(
+                        c.getCandidat().getId(),
+                        "ELIMINE_CV",
+                        "Candidature non retenue",
+                        "Votre candidature pour " + c.getSujet().getTitre() + " n'a pas été retenue après analyse du CV."
+                );
+            }
+        }
         long totalPreselectionnes = candidatures.stream()
                 .filter(c -> c.getStatut() == StatutCandidature.PRESELECTIONNE_CV).count();
         long totalElimines = candidatures.stream()
@@ -250,6 +269,23 @@ public class FiltrageService {
                     : StatutCandidature.ELIMINE_QUIZ);
         }
         candidatureRepository.saveAll(candidatures);
+        for (Candidature c : candidatures) {
+            if (c.getStatut() == StatutCandidature.ACCEPTE_QUIZ) {
+                notificationService.envoyer(
+                        c.getCandidat().getId(),
+                        "ACCEPTE_QUIZ",
+                        "Quiz validé !",
+                        "Votre quiz pour " + c.getSujet().getTitre() + " a été validé. Un entretien sera planifié prochainement."
+                );
+            } else if (c.getStatut() == StatutCandidature.ELIMINE_QUIZ) {
+                notificationService.envoyer(
+                        c.getCandidat().getId(),
+                        "ELIMINE_QUIZ",
+                        "Score insuffisant au quiz",
+                        "Votre score au quiz pour " + c.getSujet().getTitre() + " n'a pas atteint le seuil requis."
+                );
+            }
+        }
 
         long retenus  = candidatures.stream().filter(c -> c.getStatut() == StatutCandidature.ACCEPTE_QUIZ).count();
         long elimines = candidatures.stream().filter(c -> c.getStatut() == StatutCandidature.ELIMINE_QUIZ).count();
@@ -473,6 +509,24 @@ public class FiltrageService {
             classement.add(ligne);
         }
         candidatureRepository.saveAll(candidats);
+        // ── Notifications temps réel ──────────────────────────────────────────
+        for (Candidature c : candidats) {
+            if (c.getStatut() == StatutCandidature.ACCEPTE) {
+                notificationService.envoyer(
+                        c.getCandidat().getId(),
+                        "ACCEPTE",
+                        "Félicitations — Candidature acceptée !",
+                        "Votre candidature pour " + c.getSujet().getTitre() + " a été définitivement acceptée. Notre équipe RH vous contactera prochainement."
+                );
+            } else if (c.getStatut() == StatutCandidature.REFUSE) {
+                notificationService.envoyer(
+                        c.getCandidat().getId(),
+                        "REFUSE",
+                        "Résultat de votre candidature",
+                        "Votre candidature pour " + c.getSujet().getTitre() + " n'a pas été retenue. Merci de votre intérêt pour la BCT."
+                );
+            }
+        }
 
         long acceptes = candidats.stream().filter(c -> c.getStatut() == StatutCandidature.ACCEPTE).count();
         long refuses  = candidats.stream().filter(c -> c.getStatut() == StatutCandidature.REFUSE).count();

@@ -4,6 +4,7 @@ import com.bct.recrutement.entity.*;
 import com.bct.recrutement.entity.Candidature.StatutCandidature;
 import com.bct.recrutement.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,9 @@ import java.util.stream.Collectors;
 public class InterviewSchedulerService {
 
     private static final Logger log = LoggerFactory.getLogger(InterviewSchedulerService.class);
-
+    @Autowired
+    @Lazy
+    private NotificationService notificationService;
     // ✅ RÈGLES MODIFIÉES
     private static final int HEURE_DEBUT       = 9;   // 9h
     private static final int HEURE_FIN         = 17;  // 17h (5 PM)
@@ -35,8 +38,9 @@ public class InterviewSchedulerService {
     private static final int PAS_MINUTES       = DUREE_MINUTES + BATTEMENT_MINUTES; // 30 min
     private static final int JOURS_A_PLANIFIER = 5;
 
-    @Value("${groq1.api.key}")
-    private String groqApiKey;
+
+    @Value("${ml.router.url:http://localhost:5000}")
+    private String mlRouterUrl;
 
     @Value("${app.base-url:http://localhost:3000}")
     private String baseUrl;
@@ -94,6 +98,14 @@ public class InterviewSchedulerService {
                 // Mettre à jour le statut candidature
                 c.setStatut(StatutCandidature.ENTRETIEN_PLANIFIE);
                 candidatureRepository.save(c);
+                DateTimeFormatter fmtNotif = DateTimeFormatter.ofPattern("dd/MM/yyyy 'à' HH:mm");
+                notificationService.envoyer(
+                        c.getCandidat().getId(),
+                        "ENTRETIEN_PLANIFIE",
+                        "Entretien planifié",
+                        "Un entretien pour " + c.getSujet().getTitre() + " a été planifié le "
+                                + debut.format(fmtNotif) + ". Vérifiez votre espace candidat."
+                );
 
                 // Email avec lien interne
                 String lienEntretien = baseUrl + "/entretien/" + roomToken;
@@ -300,7 +312,6 @@ public class InterviewSchedulerService {
 
         List<String> creneauxValides = genererCreneauxValides();
 
-        // ✅ Créneaux déjà occupés (à éviter)
         Set<LocalDateTime> occupes = getCreneauxOccupes();
         String occupesStr = occupes.isEmpty()
                 ? "Aucun"
@@ -309,103 +320,49 @@ public class InterviewSchedulerService {
                 .map(dt -> dt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
                 .collect(Collectors.joining(", "));
 
-        String prompt = String.format("""
-            Génère un planning d'entretiens RH (Banque Centrale de Tunisie).
-
-            RÈGLES STRICTES :
-            - Horaires de travail : de %dh00 à %dh00
-            - PAUSE DÉJEUNER OBLIGATOIRE : AUCUN entretien entre %dh00 et %dh00
-            - Durée de chaque entretien : %d minutes EXACTEMENT
-            - Battement OBLIGATOIRE de %d minutes entre deux entretiens
-            - Les entretiens commencent donc toutes les %d minutes
-            - Un seul entretien à la fois (aucun chevauchement)
-            - Trier les candidats par meilleur score quiz EN PREMIER
-            - Remplir les jours dans l'ordre, du matin au soir
-            - Ne JAMAIS dépasser %dh00
-
-            CRÉNEAUX HORAIRES VALIDES (utiliser dans cet ordre, par jour) :
-            %s
-
-            ⛔ CRÉNEAUX DÉJÀ OCCUPÉS (ne JAMAIS réutiliser ces date+heure) :
-            %s
-
-            Jours ouvrés disponibles : %s
-
-            Candidats à planifier (%d au total) :
-            %s
-
-            Réponds UNIQUEMENT avec un JSON valide. AUCUN texte avant ou après.
-            Format exact :
-            [{"candidatureId":1,"debut":"%sT09:00:00","fin":"%sT09:15:00"}]
-            """,
-                HEURE_DEBUT, HEURE_FIN,
-                PAUSE_DEBUT, PAUSE_FIN,
-                DUREE_MINUTES,
-                BATTEMENT_MINUTES,
-                PAS_MINUTES,
-                HEURE_FIN,
-                String.join("  ", creneauxValides),
-                occupesStr,
-                String.join(", ", jours),
-                candidats.size(), sb,
-                jours.get(0), jours.get(0)
-        );
-
         try {
             Map<String, Object> body = new LinkedHashMap<>();
-            body.put("model",       "llama-3.3-70b-versatile");
-            body.put("max_tokens",  4000);
-            body.put("temperature", 0.1);
-            body.put("messages", List.of(
-                    Map.of("role", "system",
-                            "content", "Tu génères uniquement du JSON valide sans aucun texte autour. "
-                                    + "Tu respectes STRICTEMENT la pause déjeuner et les battements de 15 minutes."),
-                    Map.of("role", "user", "content", prompt)
-            ));
+            body.put("heureDebut",        HEURE_DEBUT);
+            body.put("heureFin",          HEURE_FIN);
+            body.put("pauseDebut",        PAUSE_DEBUT);
+            body.put("pauseFin",          PAUSE_FIN);
+            body.put("dureeMinutes",      DUREE_MINUTES);
+            body.put("battementMinutes",  BATTEMENT_MINUTES);
+            body.put("creneauxValides",   creneauxValides);
+            body.put("occupesStr",        occupesStr);
+            body.put("jours",             jours);
+            body.put("candidatsStr",      sb.toString());
+            body.put("nbCandidats",       candidats.size());
 
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(groqApiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             ResponseEntity<Map> resp = restTemplate.exchange(
-                    "https://api.groq.com/openai/v1/chat/completions",
+                    mlRouterUrl + "/schedule",
                     HttpMethod.POST, new HttpEntity<>(body, headers), Map.class
             );
 
-            if (resp.getBody() == null) return genererPlanningFallback(candidats);
-
-            List<Map<String, Object>> choices =
-                    (List<Map<String, Object>>) resp.getBody().get("choices");
-            if (choices == null || choices.isEmpty()) return genererPlanningFallback(candidats);
-
-            String content = ((Map<String, Object>) choices.get(0).get("message"))
-                    .get("content").toString().trim();
-
-            int start = content.indexOf('[');
-            int end   = content.lastIndexOf(']');
-            if (start == -1 || end == -1) return genererPlanningFallback(candidats);
-
-            List<Map<String, Object>> result = objectMapper.readValue(
-                    content.substring(start, end + 1),
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class)
-            );
-
-            // ✅ Validation des règles + collisions — sinon fallback
-            if (!validerPlanning(result)) {
-                log.warn("[Scheduler] Planning Groq invalide (règles/collisions) — fallback");
+            if (resp.getBody() == null || resp.getBody().get("planning") == null) {
+                log.warn("[Scheduler] Réponse ml_router vide — fallback");
                 return genererPlanningFallback(candidats);
             }
 
-            log.info("[Scheduler] Groq → {} créneaux générés (validés)", result.size());
+            List<Map<String, Object>> result =
+                    (List<Map<String, Object>>) resp.getBody().get("planning");
+
+            if (result.isEmpty() || !validerPlanning(result)) {
+                log.warn("[Scheduler] Planning ml_router invalide (règles/collisions/vide) — fallback");
+                return genererPlanningFallback(candidats);
+            }
+
+            log.info("[Scheduler] ml_router → {} créneaux générés (validés)", result.size());
             return result;
 
         } catch (Exception e) {
-            log.error("[Scheduler] Groq erreur: {} — fallback activé", e.getMessage());
+            log.error("[Scheduler] ml_router erreur: {} — fallback activé", e.getMessage());
             return genererPlanningFallback(candidats);
         }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
+    }  // ─────────────────────────────────────────────────────────────────────────
     //  ✅ Générer les créneaux horaires valides (hors pause déjeuner)
     // ─────────────────────────────────────────────────────────────────────────
     private List<String> genererCreneauxValides() {
@@ -563,18 +520,7 @@ public class InterviewSchedulerService {
                         <p style="color:#0f172a;font-size:14px;font-weight:600;margin:0 0 8px;">📅 %s</p>
                         <p style="color:#0f172a;font-size:14px;margin:0 0 8px;">⏱ Durée : 15 minutes (jusqu'à %s)</p>
                         <p style="color:#0f172a;font-size:14px;margin:0;">💻 Format : Entretien en ligne </p>
-                        <div style="text-align:center;margin-top:20px;">
-                                <a href="http://localhost:5173/"
-                                   style="background:#2563eb;
-                                          color:#ffffff;
-                                          padding:12px 24px;
-                                          text-decoration:none;
-                                          border-radius:8px;
-                                          font-weight:600;
-                                          display:inline-block;">
-                                    Se connecter
-                                </a>
-                            </div>
+                      
                       </div>
                       
                       
@@ -669,6 +615,14 @@ public class InterviewSchedulerService {
             e.setStartedAt(null);
 
             entretienRepository.save(e);
+            DateTimeFormatter fmtNotif = DateTimeFormatter.ofPattern("dd/MM/yyyy 'à' HH:mm");
+            notificationService.envoyer(
+                    e.getCandidature().getCandidat().getId(),
+                    "ENTRETIEN_REPROG",
+                    "Entretien reprogrammé",
+                    "Votre entretien pour " + e.getCandidature().getSujet().getTitre()
+                            + " a été reprogrammé au " + debut.format(fmtNotif) + "."
+            );
 
             // Email de reprogrammation
             envoyerEmailReprogrammation(e.getCandidature(), debut, fin);

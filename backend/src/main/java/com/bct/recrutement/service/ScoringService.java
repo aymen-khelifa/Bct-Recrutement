@@ -51,7 +51,7 @@ public class ScoringService {
 
     private static final Logger log = LoggerFactory.getLogger(ScoringService.class);
 
-    @Value("${cv.scorer.url:http://localhost:5001}")
+    @Value("${flask.cv.url:http://localhost:5000}")
     private String scorerUrl;
 
     @Autowired private CandidatureRepository    candidatureRepository;
@@ -59,6 +59,7 @@ public class ScoringService {
     @Autowired private CvScoreCacheRepository   cacheRepository;     // ← cache
     @Autowired private RestTemplate             restTemplate;
     @Autowired private ObjectMapper             objectMapper;
+    @Autowired private CloudinaryService        cloudinaryService;
 
     // ─────────────────────────────────────────────────────────────────────────
     //  POINT D'ENTRÉE — @Async depuis postuler()
@@ -173,55 +174,51 @@ public class ScoringService {
     // ─────────────────────────────────────────────────────────────────────────
     // ── Remplacer recupererCvPdf() dans ScoringService.java ──────────────────────
 
+
     private byte[] recupererCvPdf(Profilcandidat profil) {
         if (profil == null) return null;
 
-        String cvUrl = profil.getCv();
+        String cvPublicId = profil.getCvPublicId();
+        String cvUrl      = profil.getCv();
+
         if (cvUrl == null || cvUrl.isBlank()) {
             log.warn("[Scoring] Pas d'URL CV dans le profil");
             return null;
         }
 
-        // CV stocké sur Cloudinary → téléchargement HTTP direct
-        if (cvUrl.startsWith("http://") || cvUrl.startsWith("https://")) {
-            try {
-                log.info("[Scoring] Téléchargement CV Cloudinary : {}", cvUrl);
-                ResponseEntity<byte[]> response = restTemplate.exchange(
-                        cvUrl,
-                        HttpMethod.GET,
-                        new HttpEntity<>(new HttpHeaders()),
-                        byte[].class
-                );
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    log.info("[Scoring] CV téléchargé : {} bytes", response.getBody().length);
-                    return response.getBody();
-                }
-                log.warn("[Scoring] Téléchargement CV échoué : {}", response.getStatusCode());
-                return null;
-            } catch (Exception e) {
-                log.error("[Scoring] Erreur téléchargement CV Cloudinary : {}", e.getMessage());
+        String urlToFetch;
+
+        if (cvPublicId != null && !cvPublicId.isBlank()) {
+            // ✅ Nouveau CV — type=authenticated → signed URL CDN
+            urlToFetch = cloudinaryService.signedCvUrl(cvPublicId);
+            if (urlToFetch == null) {
+                log.error("[Scoring] Signed URL échouée — publicId={}", cvPublicId);
                 return null;
             }
+            log.info("[Scoring] CV via signed URL CDN — publicId={}", cvPublicId);
+        } else {
+            // Fallback anciens CVs type=upload (publics)
+            urlToFetch = cvUrl.replaceAll("/s--[^/]+--", "");
+            log.warn("[Scoring] CV fallback URL publique — {}", urlToFetch);
         }
 
-        // Fallback : chemin fichier local (ancien comportement)
         try {
-            Path p = Paths.get(cvUrl);
-            if (Files.exists(p)) {
-                log.info("[Scoring] CV local : {}", cvUrl);
-                return Files.readAllBytes(p);
+            ResponseEntity<byte[]> response = restTemplate.exchange(
+                    urlToFetch, HttpMethod.GET,
+                    new HttpEntity<>(new HttpHeaders()), byte[].class
+            );
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                log.info("[Scoring] CV téléchargé : {} bytes", response.getBody().length);
+                return response.getBody();
             }
-            log.warn("[Scoring] Fichier CV local introuvable : {}", cvUrl);
+            log.warn("[Scoring] Téléchargement échoué : {}", response.getStatusCode());
+            return null;
         } catch (Exception e) {
-            log.warn("[Scoring] Erreur lecture CV local : {}", e.getMessage());
+            log.error("[Scoring] Erreur téléchargement CV : {}", e.getMessage());
+            return null;
         }
-
-        return null;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Appel HTTP vers Python cv_scorer.py (NLP + BERT fine-tuné)
-    // ─────────────────────────────────────────────────────────────────────────
     @SuppressWarnings("unchecked")
     private Map<String, Object> appelerPythonScorer(
             byte[]       cvBytes,
@@ -232,14 +229,12 @@ public class ScoringService {
             List<String> competences,
             String       lettre) throws Exception {
 
-        // ── Format cv_scorer.py NLP+BERT (compatible pipeline complet) ────────
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
         ByteArrayResource cv = new ByteArrayResource(cvBytes) {
             @Override public String getFilename() { return "cv.pdf"; }
         };
 
-        // Champs lus par cv_scorer.py
         body.add("cv_file",      cv);
         body.add("titre_sujet",  titreSujet);
         body.add("description",  description);

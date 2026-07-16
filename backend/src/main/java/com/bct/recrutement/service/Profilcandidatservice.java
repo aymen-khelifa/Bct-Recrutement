@@ -79,6 +79,7 @@ public class Profilcandidatservice {
 
     // ── Upload CV vers Cloudinary ─────────────────────────────────────────
     @SuppressWarnings("unchecked")
+
     private String[] uploadCvCloudinary(MultipartFile file, Long userId) {
         try {
             String originalName = file.getOriginalFilename();
@@ -86,12 +87,11 @@ public class Profilcandidatservice {
                     ? originalName.substring(originalName.lastIndexOf('.') + 1).toLowerCase()
                     : "pdf";
 
-            String resourceType = "raw"; // PDF et Word → raw
-            // Extension dans le public_id → Cloudinary sert le bon type MIME
             String publicId = "bct-recrutement/cv/cv_" + userId + "_" + System.currentTimeMillis() + "." + ext;
 
             Map<String, Object> params = ObjectUtils.asMap(
-                    "resource_type", resourceType,
+                    "resource_type", "raw",
+                    "type",          "authenticated",   // ✅ fichier privé — signed URL obligatoire
                     "public_id",     publicId,
                     "overwrite",     true,
                     "tags",          new String[]{"cv", "bct", "candidat-" + userId},
@@ -102,9 +102,7 @@ public class Profilcandidatservice {
             String url   = (String) result.get("secure_url");
             String pubId = (String) result.get("public_id");
 
-            // Supprimer la signature s--xxx-- de l'URL avant de stocker
-            // URL signée  : https://res.cloudinary.com/xxx/raw/upload/s--ABC123--/v123/folder/file.pdf
-            // URL propre  : https://res.cloudinary.com/xxx/raw/upload/v123/folder/file.pdf
+            // Stocker URL sans signature (la signature est regénérée à chaque accès via signedCvUrl)
             url = url.replaceAll("/s--[^/]+--", "");
 
             return new String[]{ url, pubId };
@@ -112,9 +110,7 @@ public class Profilcandidatservice {
         } catch (IOException e) {
             throw new RuntimeException("Erreur upload CV Cloudinary : " + e.getMessage());
         }
-    }
-
-    // ── Récupérer mon profil (CANDIDAT) ───────────────────────────────────
+    } // ── Récupérer mon profil (CANDIDAT) ───────────────────────────────────
     public Map<String, Object> getMonProfil(String email) {
         User user = userService.findByEmail(email);
         Profilcandidat profil = profilRepository.findByUser(user)

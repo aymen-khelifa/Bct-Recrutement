@@ -166,9 +166,8 @@ const RHParametres = () => {
 
   const initiales = (name = '') =>
     name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+const avatarSrc = photoPreview || user?.photoUrl || null;
 
-  const avatarSrc = photoPreview ||
-    (user?.photoUrl ? `/${user.photoUrl.replace(/^\//, '')}` : null);
 
   return (
     <>

@@ -19,20 +19,40 @@ public class CvVectorClient {
 
     @Autowired private RestTemplate restTemplate;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private CloudinaryService        cloudinaryService;
 
     // URL du microservice Flask
-    @Value("${flask.cv.url:http://localhost:5001}")
+    @Value("${flask.cv.url:http://localhost:5000}")
     private String flaskUrl;
 
     // ── Indexer le CONTENU d'un CV (async, à la postulation) ──────────────────
-    @Async
-    public void indexerCv(Long candidatureId, String candidatNom, String sujetTitre, String cvUrl) {
+
+    @Async("scoringExecutor")
+
+    public void indexerCv(Long candidatureId, String candidatNom, String sujetTitre,
+                          String cvPublicId, String cvUrlFallback) {
         try {
+            String urlToIndex;
+
+            if (cvPublicId != null && !cvPublicId.isBlank()) {
+                // ✅ Nouveau CV — signed URL CDN
+                urlToIndex = cloudinaryService.signedCvUrl(cvPublicId);
+                if (urlToIndex == null) {
+                    return;
+                }
+            } else {
+                // Fallback anciens CVs
+                urlToIndex = cvUrlFallback != null
+                        ? cvUrlFallback.replaceAll("/s--[^/]+--", "")
+                        : null;
+                if (urlToIndex == null) return;
+            }
+
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("candidatureId", candidatureId);
             body.put("candidatNom",   candidatNom);
             body.put("sujetTitre",    sujetTitre);
-            body.put("cvUrl",         cvUrl);
+            body.put("cvUrl",         urlToIndex);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -40,14 +60,15 @@ public class CvVectorClient {
             restTemplate.postForEntity(flaskUrl + "/cv/index",
                     new HttpEntity<>(body, headers), Map.class);
 
-            log.info("[CvVector] CV indexé pour candidature #{}", candidatureId);
+
         } catch (Exception e) {
             log.error("[CvVector] échec indexation CV #{} : {}", candidatureId, e.getMessage());
         }
     }
 
+
     // ── Indexer / mettre à jour UNE fiche candidat (async, upsert ciblé) ──────
-    @Async
+    @Async("scoringExecutor")
     public void indexerFiche(Long candidatureId, String candidatNom, String texteFiche) {
         try {
             Map<String, Object> body = new LinkedHashMap<>();
@@ -61,7 +82,7 @@ public class CvVectorClient {
             restTemplate.postForEntity(flaskUrl + "/candidat/index",
                     new HttpEntity<>(body, headers), Map.class);
 
-            log.info("[CvVector] fiche indexée pour candidature #{}", candidatureId);
+
         } catch (Exception e) {
             log.error("[CvVector] échec indexation fiche #{} : {}", candidatureId, e.getMessage());
         }

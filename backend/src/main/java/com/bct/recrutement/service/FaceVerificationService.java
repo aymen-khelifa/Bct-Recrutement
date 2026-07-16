@@ -37,7 +37,7 @@ public class FaceVerificationService {
     private static final int  MAX_ATTEMPTS    = 5;
     private static final long BLOCK_WINDOW_MIN = 30L;
 
-    @Value("${flask.face.service.url:http://localhost:5002}")
+    @Value("${flask.face.service.url:http://localhost:5000}")
     private String flaskUrl;
 
     @Autowired private RestTemplate                  restTemplate;
@@ -324,13 +324,23 @@ public class FaceVerificationService {
             // IMPORTANT : tester isBlank avant Paths.get() pour éviter
             // "Illegal char <:> at index 5: https://..." sur Windows
             if (chemin.startsWith("http://") || chemin.startsWith("https://")) {
-                // Supprimer la signature s--xxx-- si présente
                 String cleanUrl = chemin.replaceAll("/s--[^/]+--", "");
                 log.info("[Face] Téléchargement photo Cloudinary : {}", cleanUrl);
                 try {
-                    byte[] bytes = new java.net.URI(cleanUrl).toURL().openStream().readAllBytes();
-                    String ext = cleanUrl.toLowerCase().endsWith(".png") ? "png" : "jpeg";
-                    return "data:image/" + ext + ";base64," + Base64.getEncoder().encodeToString(bytes);
+                    java.net.URL url = new java.net.URI(cleanUrl).toURL();
+                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setConnectTimeout(5000);  // 5s max pour établir la connexion
+                    conn.setReadTimeout(8000);     // 8s max pour lire la réponse
+                    conn.setRequestMethod("GET");
+
+                    try (var in = conn.getInputStream()) {
+                        byte[] bytes = in.readAllBytes();
+                        String ext = cleanUrl.toLowerCase().endsWith(".png") ? "png" : "jpeg";
+                        return "data:image/" + ext + ";base64," + Base64.getEncoder().encodeToString(bytes);
+                    }
+                } catch (java.net.SocketTimeoutException ex) {
+                    log.warn("[Face] Timeout téléchargement photo : {} — {}", cleanUrl, ex.getMessage());
+                    return null;
                 } catch (Exception ex) {
                     log.warn("[Face] Impossible télécharger photo URL : {} — {}", cleanUrl, ex.getMessage());
                     return null;

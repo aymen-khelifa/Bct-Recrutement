@@ -91,14 +91,5 @@ public class FaceVerificationController {
         ));
     }
 
-    // ── Health Flask ──────────────────────────────────────────────────────────
-    @GetMapping("/health")
-    public ResponseEntity<?> health() {
-        boolean ok = faceService.isAvailable();
-        return ok
-                ? ResponseEntity.ok(Map.of("status", "ok", "deepface", true))
-                : ResponseEntity.status(503).body(Map.of(
-                "status",  "unavailable",
-                "message", "Démarrez face_verification_service.py"));
-    }
+
 }

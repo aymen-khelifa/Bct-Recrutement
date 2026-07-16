@@ -47,6 +47,7 @@ public class AdminController {
         long nbCandidat = all.stream().filter(u -> u.getRole() == Role.ROLE_CANDIDAT).count();
         long nbAdmin    = all.stream().filter(u -> u.getRole() == Role.ROLE_ADMIN).count();
         long nbActifs   = all.stream().filter(User::isEnabled).count();
+        long nbBloques  = all.stream().filter(u -> !u.isEnabled()).count();
 
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("total",     total);
@@ -54,9 +55,9 @@ public class AdminController {
         stats.put("candidats", nbCandidat);
         stats.put("admins",    nbAdmin);
         stats.put("actifs",    nbActifs);
+        stats.put("bloques",   nbBloques);
         return ResponseEntity.ok(stats);
     }
-
     // ── Créer un compte RH ──────────────────────────────────────────────────
     @PostMapping("/users/rh")
     public ResponseEntity<?> createRh(@RequestBody Map<String, String> body) {

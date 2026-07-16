@@ -78,7 +78,7 @@ const Footer = () => {
               <li><a href="#">Toutes les offres</a></li>
               <li><a href="#">Processus de recrutement</a></li>
               <li><a href="#">FAQ Candidat</a></li>
-              <li><a href="#">Conseils CV &amp; Entretien</a></li>
+              
             </ul>
           </div>
 
@@ -87,7 +87,7 @@ const Footer = () => {
             <h4>Légal</h4>
             <ul>
               <li><a href="#">Mentions Légales</a></li>
-              <li><a href="#">Protection des Données (RGPD)</a></li>
+              
               <li><a href="#">Accessibilité</a></li>
               <li><a href="#">Conditions Générales</a></li>
             </ul>
@@ -99,15 +99,15 @@ const Footer = () => {
             <ul>
               <li>
                 <span className="material-symbols-outlined">location_on</span>
-                Paris, France
+                25, Rue Hédi Nouira - BP 777 - 1080 Tunis
               </li>
               <li>
                 <span className="material-symbols-outlined">mail</span>
-                recrutement@banquecentrale.fr
+                boc@bct.gov.tn
               </li>
               <li>
                 <span className="material-symbols-outlined">phone</span>
-                +33 (0)1 00 00 00 00
+                (+216) 71 122 000 / (+216) 71 340 615
               </li>
             </ul>
           </div>
@@ -116,15 +116,8 @@ const Footer = () => {
 
         {/* Bottom bar */}
         <div className="db-footer-bottom">
-          <p>© 2024 Banque Centrale de l'Union. Tous droits réservés.</p>
-          <div className="db-footer-icons">
-            <a href="#" aria-label="Site web">
-              <span className="material-symbols-outlined">public</span>
-            </a>
-            <a href="#" aria-label="Partager">
-              <span className="material-symbols-outlined">share</span>
-            </a>
-          </div>
+          <p>© 2026 Banque Centrale de l'Union. Tous droits réservés.</p>
+          
         </div>
 
       </footer>

@@ -364,9 +364,18 @@ const AdminUtilisateurs = () => {
                       </td>
                       <td><span style={{fontSize:'0.8125rem',color:'#475569'}}>{fmtDate(u.createdAt)}</span></td>
                       <td className="right">
-                        <button className="admu-act-btn" title={u.enabled ? 'Désactiver' : 'Activer'} onClick={() => toggleUser(u)}>
-                          <span className="material-symbols-outlined">{u.enabled ? 'toggle_on' : 'toggle_off'}</span>
-                        </button>
+                        <button
+  className="admu-act-btn"
+  title={u.enabled ? "Désactiver" : "Activer"}
+  onClick={() => toggleUser(u)}
+>
+  <span
+    className="material-symbols-outlined"
+    style={{ color: u.enabled ? "green" : "red" }}
+  >
+    {u.enabled ? "toggle_on" : "toggle_off"}
+  </span>
+</button>
                         <button className="admu-act-btn danger" title="Supprimer" onClick={() => deleteUser(u)}>
                           <span className="material-symbols-outlined">delete</span>
                         </button>

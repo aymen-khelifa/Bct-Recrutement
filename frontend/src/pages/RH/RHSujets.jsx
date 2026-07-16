@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import RHNouveauSujet from './Rhnouveausujet';
-import RHModifierSujet from './Rhmodifiersujet';
-import RHQuizEditor from './Rhquizgestion';
-import RHCandidaturesSujet from './RHCandidaturesSujet';
+import RHNouveauSujet from './RHNouveauSujet';
+import RHModifierSujet from './RHModifierSujet';
+import RHQuizEditor from './RHQuizEditor';
+import RHCandidaturesSujet from './RhcandidaturesSujet';
 
 const styles = `
   .rhs-root * { box-sizing: border-box; }

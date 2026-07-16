@@ -39,7 +39,10 @@ const styles = `
   .rhc-tab.active .rhc-tab-count { background: rgba(0,61,122,0.1); color: #003d7a; }
 
   .rhc-table-wrap { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; }
-  .rhc-table { width: 100%; text-align: left; border-collapse: collapse; }
+  .rhc-table-scroll { overflow-x: auto; }
+  .rhc-table-scroll::-webkit-scrollbar { height: 4px; }
+  .rhc-table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  .rhc-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 820px; }
   .rhc-thead tr { background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
   .rhc-thead th { padding: 1rem 1.5rem; font-size: 0.625rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
   .rhc-thead th.right { text-align: right; }
@@ -75,7 +78,6 @@ const styles = `
   .rhc-quiz-badge-btn { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.5rem; border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 700; background: rgba(124,58,237,0.08); color: #003d7a; border: 1px solid rgba(124,58,237,0.2); cursor: pointer; font-family: 'Public Sans', sans-serif; transition: background 0.15s; }
   .rhc-quiz-badge-btn:hover { background: rgba(124,58,237,0.15); }
 
-  /* ✅ Badge entretien (note /10) */
   .rhc-entretien-badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.5rem; border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 700; background: rgba(5,150,105,0.08); color: #059669; border: 1px solid rgba(5,150,105,0.2); }
   .rhc-entretien-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
   .rhc-ent-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
@@ -178,7 +180,6 @@ const styles = `
   .rhc-score-total-label { font-size: 0.8125rem; font-weight: 700; color: #003d7a; }
   .rhc-score-total-val { font-size: 1.5rem; font-weight: 900; color: #003d7a; }
 
-  /* ── Quiz/Video popup (smaller modal) ── */
   .rhc-qv-modal { position: relative; background: #fff; width: 100%; max-width: 42rem; max-height: 95vh; display: flex; flex-direction: column; border-radius: 1rem; box-shadow: 0 25px 60px rgba(0,0,0,0.3); overflow: hidden; }
 
   .rhc-quiz-section { background: linear-gradient(135deg, #1e0a3c, #2d1060); border-radius: 0.75rem; overflow: hidden; }
@@ -189,18 +190,7 @@ const styles = `
   .rhc-quiz-sec-sub { font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-top: 0.125rem; }
   .rhc-quiz-score-pill { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 0.75rem; padding: 0.625rem 1.125rem; text-align: center; }
   .rhc-quiz-score-pill .big { font-size: 1.75rem; font-weight: 900; color: #fff; line-height: 1; }
-  .rhc-quiz-score-pill .small { font-size: 0.5625rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.08em; }
-  .rhc-quiz-sec-body { background: #fff; border-top: 1px solid rgba(124,58,237,0.15); padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
-  .rhc-quiz-info-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; }
-  .rhc-quiz-info-cell { text-align: center; padding: 0.75rem; background: #f8fafc; border-radius: 0.5rem; border: 1px solid #f1f5f9; }
-  .rhc-quiz-info-cell .qlabel { font-size: 0.5625rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 0.25rem; }
-  .rhc-quiz-info-cell .qvalue { font-size: 1rem; font-weight: 900; color: #0f172a; }
-  .rhc-quiz-bar-wrap { }
-  .rhc-quiz-bar-header { display: flex; justify-content: space-between; margin-bottom: 0.375rem; }
-  .rhc-quiz-bar-label { font-size: 0.75rem; font-weight: 700; color: #475569; }
-  .rhc-quiz-bar-val { font-size: 0.75rem; font-weight: 700; color: #7c3aed; }
-  .rhc-quiz-progress { width: 100%; height: 0.5rem; background: #e2e8f0; border-radius: 9999px; overflow: hidden; }
-  .rhc-quiz-progress-fill { height: 100%; border-radius: 9999px; transition: width 0.6s ease; }
+  .rhc-quiz-sec-body { background: #fff; border-top: 1px solid rgba(124,58,237,0.15); padding: 1.25rem 1.5rem; }
   .rhc-quiz-no-data { padding: 1.5rem; text-align: center; color: rgba(255,255,255,0.5); font-size: 0.875rem; font-style: italic; }
 
   .rhc-video-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
@@ -217,15 +207,24 @@ const styles = `
   .rhc-video-no-data { padding: 2rem; text-align: center; color: #94a3b8; font-size: 0.875rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
   .rhc-video-no-data .material-symbols-outlined { font-size: 2rem; color: #cbd5e1; }
 
+  /* ── CV Popup (proxy blob — identique MonProfil) ── */
   .rhc-cv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-  .rhc-cv-popup { background: #fff; border-radius: 0.875rem; width: 100%; max-width: 56rem; height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
+  .rhc-cv-popup { background: #fff; border-radius: 0.875rem; width: 100%; max-width: 56rem; height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.35); }
   .rhc-cv-popup-header { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1.25rem; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
   .rhc-cv-popup-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 700; color: #0f172a; }
-  .rhc-cv-popup-close { width: 2rem; height: 2rem; border: none; background: #f1f5f9; border-radius: 0.375rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .rhc-cv-popup-body { flex: 1; overflow: hidden; }
+  .rhc-cv-popup-title .material-symbols-outlined { color: #003d7a; }
+  .rhc-cv-popup-close { width: 2rem; height: 2rem; border: none; background: #f1f5f9; border-radius: 0.375rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+  .rhc-cv-popup-close:hover { background: #e2e8f0; }
+  .rhc-cv-popup-body { flex: 1; overflow: hidden; position: relative; }
   .rhc-cv-popup-body iframe { width: 100%; height: 100%; border: none; }
-  .rhc-cv-popup-footer { padding: 0.75rem 1.25rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; flex-shrink: 0; }
-  .rhc-cv-popup-dl { padding: 0.5rem 1.25rem; background: #003d7a; color: #fff; border: none; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 700; cursor: pointer; font-family: 'Public Sans', sans-serif; display: flex; align-items: center; gap: 0.375rem; text-decoration: none; }
+  .rhc-cv-popup-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: .75rem; color: #64748b; font-size: .875rem; }
+  .rhc-cv-popup-loading .material-symbols-outlined { font-size: 1.75rem; color: #003d7a; animation: rhc-spin .8s linear infinite; }
+  .rhc-cv-popup-no-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1rem; color: #94a3b8; }
+  .rhc-cv-popup-no-preview .material-symbols-outlined { font-size: 3rem; color: #cbd5e1; }
+  .rhc-cv-popup-footer { padding: .75rem 1.25rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; flex-shrink: 0; }
+  .rhc-cv-popup-dl { padding: .5rem 1.25rem; background: #003d7a; color: #fff; border: none; border-radius: .5rem; font-size: .8125rem; font-weight: 700; display: flex; align-items: center; gap: .375rem; cursor: pointer; font-family: 'Public Sans', sans-serif; transition: background .15s; }
+  .rhc-cv-popup-dl:hover { background: #002a5c; }
+  .rhc-cv-popup-dl .material-symbols-outlined { font-size: 1rem; }
 
   .rhc-lettre-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; }
   .rhc-lettre-title { font-size: 0.6875rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 0.875rem; }
@@ -245,7 +244,7 @@ const ALL_STATUTS = [
   { value: 'ELIMINE_CV',         label: 'Éliminé (CV)' },
   { value: 'ACCEPTE_QUIZ',       label: 'Accepté phase quiz' },
   { value: 'ELIMINE_QUIZ',       label: 'Éliminé (Quiz)' },
-  { value: 'ENTRETIEN_PLANIFIE',  label: 'Entretien planifié ' },
+  { value: 'ENTRETIEN_PLANIFIE', label: 'Entretien planifié' },
   { value: 'ACCEPTE',            label: 'Accepté définitif' },
   { value: 'REFUSE',             label: 'Refusé' },
 ];
@@ -272,15 +271,12 @@ const parseRapport = (txt = '') => {
     if (!l) return;
     if (l === 'POINTS FORTS :' || l === 'POINTS FORTS:')    { section = 'forts';   return; }
     if (l === 'POINTS FAIBLES :' || l === 'POINTS FAIBLES:'){ section = 'faibles'; return; }
-    if (
-      l.startsWith('Score :') || l.startsWith('Recommandation :') ||
-      l.startsWith('Similarité') || l.startsWith('Email :') ||
-      l.startsWith('Langue') || l.startsWith('FORMULE') ||
-      l.startsWith('Modèle') || l.startsWith('BERT :')
-    ) {
+    if (l.startsWith('Score :') || l.startsWith('Recommandation :') ||
+        l.startsWith('Similarité') || l.startsWith('Email :') ||
+        l.startsWith('Langue') || l.startsWith('FORMULE') ||
+        l.startsWith('Modèle') || l.startsWith('BERT :')) {
       if (l.startsWith('Score :')) r.resume = l;
-      section = null;
-      return;
+      section = null; return;
     }
     if ((l.startsWith('•') || l.startsWith('-')) && section) {
       const text = l.replace(/^[•-]\s*/, '').trim();
@@ -315,26 +311,21 @@ const fmtDateTime = (v) => v ? new Date(v).toLocaleDateString('fr-FR', {day:'2-d
 const fmtDuration = (sec) => { if (!sec) return '—'; return `${Math.floor(sec/60)}min ${sec%60}s`; };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Quiz + Video popup (standalone, triggered from table row)
+// Quiz + Video popup
 // ═══════════════════════════════════════════════════════════════════════════
 const QuizVideoModal = ({ data, onClose }) => {
   const { scoreQuiz, quizPasseLe, videoUrl,
           recordingDurationSec, recordingUploadedAt,
           candidatNom, candidatPhoto } = data;
 
-
   return (
     <div className="rhc-overlay" style={{zIndex: 300}}>
       <div className="rhc-overlay-bg" onClick={onClose}/>
       <div className="rhc-qv-modal">
-
-        {/* Header */}
         <div className="rhc-modal-header">
           <div className="rhc-modal-header-left">
             <div className="rhc-modal-avatar">
-              {candidatPhoto
-                ? <img src={candidatPhoto} alt=""/>
-                : getInit(candidatNom || '')}
+              {candidatPhoto ? <img src={candidatPhoto} alt=""/> : getInit(candidatNom || '')}
             </div>
             <div>
               <p className="rhc-modal-name">{candidatNom || '—'}</p>
@@ -346,10 +337,7 @@ const QuizVideoModal = ({ data, onClose }) => {
           </button>
         </div>
 
-        {/* Body */}
         <div className="rhc-modal-body">
-
-          {/* Section Quiz */}
           <div className="rhc-quiz-section">
             <div className="rhc-quiz-sec-header">
               <div className="rhc-quiz-sec-left">
@@ -357,37 +345,27 @@ const QuizVideoModal = ({ data, onClose }) => {
                 <div>
                   <p className="rhc-quiz-sec-title">Quiz Technique</p>
                   <p className="rhc-quiz-sec-sub">
-                    {scoreQuiz != null
-                      ? `Passé le ${fmtDateTime(quizPasseLe)}`
-                      : 'Quiz non encore passé'}
+                    {scoreQuiz != null ? `Passé le ${fmtDateTime(quizPasseLe)}` : 'Quiz non encore passé'}
                   </p>
                 </div>
               </div>
               {scoreQuiz != null && (
                 <div className="rhc-quiz-score-pill">
                   <div className="big">{scoreQuiz}<span style={{fontSize:'1rem',opacity:0.6}}>/50</span></div>
-                  
                 </div>
               )}
             </div>
-
-            {scoreQuiz != null ? (
-              <div className="rhc-quiz-sec-body">
-               
-              </div>
-            ) : (
+            {scoreQuiz == null && (
               <div className="rhc-quiz-no-data">Le candidat n'a pas encore passé le quiz.</div>
             )}
           </div>
 
-          {/* Section Vidéo */}
           <div className="rhc-video-section">
             <div className="rhc-video-header">
               <div className="rhc-video-header-left">
                 <span className="material-symbols-outlined">videocam</span>
                 <span>Enregistrement vidéo du quiz</span>
               </div>
-             
             </div>
             {videoUrl ? (
               <div className="rhc-video-body">
@@ -419,9 +397,6 @@ const QuizVideoModal = ({ data, onClose }) => {
             )}
           </div>
         </div>
-
-        {/* Footer */}
-     
       </div>
     </div>
   );
@@ -442,7 +417,11 @@ const RHCandidatures = () => {
   const [toast,          setToast]          = useState(null);
   const [detail,         setDetail]         = useState(null);
   const [modalLoading,   setModalLoading]   = useState(false);
+  // ── CV popup (proxy blob — même logique que MonProfil) ───────────────────
   const [showCv,         setShowCv]         = useState(false);
+  const [cvBlobUrl,      setCvBlobUrl]      = useState(null);
+  const [cvBlobLoading,  setCvBlobLoading]  = useState(false);
+  // ─────────────────────────────────────────────────────────────────────────
   const [quizVideoModal, setQuizVideoModal] = useState(null);
 
   const fetchCandidatures = async () => {
@@ -497,7 +476,7 @@ const RHCandidatures = () => {
   };
 
   const openModal = async (app) => {
-    setDetail(null); setShowCv(false); setModalLoading(true);
+    setDetail(null); closeCvBlob(); setModalLoading(true);
     try {
       const { data } = await axios.get(`/api/candidatures/${app.id}`);
       setDetail(data);
@@ -507,19 +486,58 @@ const RHCandidatures = () => {
       setModalLoading(false);
     }
   };
-  const closeModal = () => { setDetail(null); setShowCv(false); };
+
+  const closeModal = () => {
+    closeCvBlob();
+    setDetail(null);
+  };
+
+ const openCvBlob = async () => {
+  if (!detail) return;
+  const userId = detail.candidat?.id ?? detail.candidatId;
+  if (!userId) return;
+
+  setShowCv(true);
+  setCvBlobUrl(null);
+  setCvBlobLoading(true);
+  try {
+    const { data } = await axios.get(`/api/files/cv/${userId}/url`, {
+      withCredentials: true,
+    });
+    // Ouvre directement la signed URL dans l'iframe — le browser a accès Internet
+    setCvBlobUrl(data.url);
+  } catch (e) {
+    console.error('[openCvBlob]', e.message);
+    setCvBlobUrl(null);
+  } finally {
+    setCvBlobLoading(false);
+  }
+};
+  const closeCvBlob = () => {
+    if (cvBlobUrl) URL.revokeObjectURL(cvBlobUrl);
+    setCvBlobUrl(null);
+    setShowCv(false);
+  };
+
+  const downloadCvBlob = () => {
+    if (!cvBlobUrl) return;
+    const a = document.createElement('a');
+    a.href = cvBlobUrl;
+    a.download = cvName || 'cv.pdf';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
 
   useEffect(() => {
     const fn = e => {
       if (e.key === 'Escape') {
-        if (quizVideoModal) { setQuizVideoModal(null); return; }
+        if (showCv)          { closeCvBlob(); return; }
+        if (quizVideoModal)  { setQuizVideoModal(null); return; }
         closeModal();
-        setShowCv(false);
       }
     };
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
-  }, [quizVideoModal]);
+  }, [quizVideoModal, showCv, cvBlobUrl]);
 
   // ── Modal detail data ──────────────────────────────────────────────────
   const score     = detail?.scoreAi?.scoreAi ?? null;
@@ -537,7 +555,6 @@ const RHCandidatures = () => {
       <style>{styles}</style>
       <div className="rhc-root">
 
-        {/* Toast */}
         {toast && (
           <div className={`rhc-toast ${toast.type}`}>
             <span className="material-symbols-outlined">{toast.type==='success'?'check_circle':'error'}</span>
@@ -545,33 +562,50 @@ const RHCandidatures = () => {
           </div>
         )}
 
-        {/* ══ Quiz + Video popup ══ */}
         {quizVideoModal && (
-          <QuizVideoModal
-            data={quizVideoModal}
-            onClose={() => setQuizVideoModal(null)}
-          />
+          <QuizVideoModal data={quizVideoModal} onClose={() => setQuizVideoModal(null)} />
         )}
 
-        {/* ══ CV POPUP iframe ══ */}
-        {showCv && cvUrl && (
-          <div className="rhc-cv-overlay" onClick={() => setShowCv(false)}>
+        {/* ══ CV POPUP — proxy blob (comme MonProfil) ══ */}
+        {showCv && (
+          <div className="rhc-cv-overlay" onClick={closeCvBlob}>
             <div className="rhc-cv-popup" onClick={e => e.stopPropagation()}>
               <div className="rhc-cv-popup-header">
                 <div className="rhc-cv-popup-title">
-                  <span className="material-symbols-outlined">picture_as_pdf</span>{cvName}
+                  <span className="material-symbols-outlined">picture_as_pdf</span>
+                  {cvName}
                 </div>
-                <button className="rhc-cv-popup-close" onClick={() => setShowCv(false)}>
+                <button type="button" className="rhc-cv-popup-close" onClick={closeCvBlob}>
                   <span className="material-symbols-outlined" style={{fontSize:'1.125rem'}}>close</span>
                 </button>
               </div>
+
               <div className="rhc-cv-popup-body">
-                <iframe src={cvUrl} title="CV"/>
+                {cvBlobLoading ? (
+                  <div className="rhc-cv-popup-loading">
+                    <span className="material-symbols-outlined">progress_activity</span>
+                    Chargement du document...
+                  </div>
+                ) : cvBlobUrl ? (
+                  <iframe src={cvBlobUrl} title={cvName} />
+                ) : (
+                  <div className="rhc-cv-popup-no-preview">
+                    <span className="material-symbols-outlined">error_outline</span>
+                    <p style={{fontSize:'.875rem',color:'#64748b'}}>Impossible de charger le document.</p>
+                  </div>
+                )}
               </div>
+
               <div className="rhc-cv-popup-footer">
-                <a href={cvUrl} download={cvName} className="rhc-cv-popup-dl">
-                  <span className="material-symbols-outlined">download</span>Télécharger
-                </a>
+                <button
+                  type="button"
+                  className="rhc-cv-popup-dl"
+                  onClick={downloadCvBlob}
+                  disabled={!cvBlobUrl}
+                >
+                  <span className="material-symbols-outlined">download</span>
+                  Télécharger
+                </button>
               </div>
             </div>
           </div>
@@ -583,7 +617,6 @@ const RHCandidatures = () => {
             <div className="rhc-overlay-bg" onClick={closeModal}/>
             <div className="rhc-modal">
 
-              {/* Header */}
               <div className="rhc-modal-header">
                 <div className="rhc-modal-header-left">
                   <div className="rhc-modal-avatar">
@@ -595,14 +628,13 @@ const RHCandidatures = () => {
                   </div>
                 </div>
                 <div style={{display:'flex',alignItems:'center',gap:'1rem'}}>
-                  {detail && <span style={{display:'flex',alignItems:'center',gap:'1rem', backgroundColor:'white'}} className={`rhc-badge ${detail.statut}`}>{LABEL_MAP[detail.statut]||detail.statut}</span>}
+                  {detail && <span style={{display:'flex',alignItems:'center',gap:'1rem',backgroundColor:'white'}} className={`rhc-badge ${detail.statut}`}>{LABEL_MAP[detail.statut]||detail.statut}</span>}
                   <button className="rhc-modal-close" onClick={closeModal}>
                     <span className="material-symbols-outlined">close</span>
                   </button>
                 </div>
               </div>
 
-              {/* Body */}
               <div className="rhc-modal-body">
                 {modalLoading ? (
                   <div className="rhc-loading">
@@ -611,7 +643,6 @@ const RHCandidatures = () => {
                   </div>
                 ) : detail && (<>
 
-                  {/* Infos + score wheel */}
                   <div className="rhc-modal-top">
                     <div className="rhc-info-card">
                       <p className="rhc-info-card-title">
@@ -658,7 +689,6 @@ const RHCandidatures = () => {
                     </div>
                   </div>
 
-                  {/* Sujet */}
                   <div className="rhc-sujet-banner">
                     <div className="rhc-sujet-banner-icon"><span className="material-symbols-outlined">work</span></div>
                     <div style={{flex:1}}>
@@ -677,7 +707,6 @@ const RHCandidatures = () => {
                     </div>
                   </div>
 
-                  {/* Analyse IA + critères */}
                   <div className="rhc-ai-grid">
                     <div>
                       <p className="rhc-ai-title">
@@ -707,7 +736,7 @@ const RHCandidatures = () => {
                       })() : <p style={{fontSize:'0.875rem',color:'#94a3b8',fontStyle:'italic'}}>Scoring IA en cours...</p>}
                     </div>
 
-                      <div className="rhc-criteria-card">
+                    <div className="rhc-criteria-card">
                       <p style={{fontSize:'0.875rem',fontWeight:700,color:'#0f172a',marginBottom:'1.5rem'}}>Scores détaillés</p>
                       {det ? (<>
                         {CRITERES.map(cr => {
@@ -732,19 +761,16 @@ const RHCandidatures = () => {
                     </div>
                   </div>
 
-                  {/* Lettre de motivation */}
                   <div className="rhc-lettre-box">
                     <p className="rhc-lettre-title">Lettre de motivation</p>
                     <p className="rhc-lettre-text">{detail.lettreMotivation||'—'}</p>
                   </div>
 
-                  {/* ✅ Section Entretien */}
                   {(detail.scoreEntretien != null || detail.entretienStatut) && (
                     <div className="rhc-entretien-section">
                       <div className="rhc-ent-header">
                         <p className="rhc-ent-title">
-                          <span className="material-symbols-outlined">videocam</span>
-                          Entretien
+                          <span className="material-symbols-outlined">videocam</span>Entretien
                         </p>
                         {detail.scoreEntretien != null && (
                           <div className="rhc-ent-note-pill">
@@ -753,34 +779,14 @@ const RHCandidatures = () => {
                           </div>
                         )}
                       </div>
-
                       <div className="rhc-ent-grid">
-                        <div className="rhc-ent-field">
-                          <label>Statut</label>
-                          <p>
-                            <span className={`rhc-ent-badge-status ${detail.entretienStatut||''}`}>
-                              {detail.entretienStatut || '—'}
-                            </span>
-                          </p>
-                        </div>
-                        <div className="rhc-ent-field">
-                          <label>Date</label>
-                          <p>{detail.dateEntretien || '—'}</p>
-                        </div>
-                        <div className="rhc-ent-field">
-                          <label>Heure début</label>
-                          <p>{detail.entretienHeureDebut || '—'}</p>
-                        </div>
-                        <div className="rhc-ent-field">
-                          <label>Heure fin</label>
-                          <p>{detail.entretienHeureFin || '—'}</p>
-                        </div>
+                        <div className="rhc-ent-field"><label>Statut</label><p><span className={`rhc-ent-badge-status ${detail.entretienStatut||''}`}>{detail.entretienStatut||'—'}</span></p></div>
+                        <div className="rhc-ent-field"><label>Date</label><p>{detail.dateEntretien||'—'}</p></div>
+                        <div className="rhc-ent-field"><label>Heure début</label><p>{detail.entretienHeureDebut||'—'}</p></div>
+                        <div className="rhc-ent-field"><label>Heure fin</label><p>{detail.entretienHeureFin||'—'}</p></div>
                       </div>
-
                       <div>
-                        <label style={{fontSize:'0.5625rem',fontWeight:800,textTransform:'uppercase',letterSpacing:'0.1em',color:'#94a3b8',display:'block',marginBottom:'0.5rem'}}>
-                          Remarques du RH
-                        </label>
+                        <label style={{fontSize:'0.5625rem',fontWeight:800,textTransform:'uppercase',letterSpacing:'0.1em',color:'#94a3b8',display:'block',marginBottom:'0.5rem'}}>Remarques du RH</label>
                         <div className="rhc-ent-notes">
                           {detail.notesRh && detail.notesRh.trim()
                             ? detail.notesRh
@@ -792,11 +798,11 @@ const RHCandidatures = () => {
                 </>)}
               </div>
 
-              {/* Footer — CV + Quiz/Vidéo */}
+              {/* Footer — CV via proxy blob + Quiz/Vidéo */}
               <div className="rhc-modal-footer">
                 <div className="rhc-footer-left">
                   {cvUrl && (
-                    <button className="rhc-footer-action-btn cv" onClick={() => setShowCv(true)}>
+                    <button className="rhc-footer-action-btn cv" onClick={openCvBlob}>
                       <span className="material-symbols-outlined">picture_as_pdf</span>
                       Voir le CV
                     </button>
@@ -809,7 +815,6 @@ const RHCandidatures = () => {
                         candidatNom:          detail.candidat?.nom         || '—',
                         candidatPhoto:        detail.candidat?.photoUrl    || null,
                         scoreQuiz:            detail.scoreQuiz             ?? null,
-                        mentionQuiz:          detail.mentionQuiz           ?? null,
                         quizPasseLe:          detail.quizPasseLe           ?? null,
                         videoUrl:             detail.recordingUrl          ?? null,
                         recordingDurationSec: detail.recordingDurationSec  ?? null,
@@ -834,7 +839,6 @@ const RHCandidatures = () => {
 
         {error && <div className="rhc-error"><span className="material-symbols-outlined">error</span>{error}</div>}
 
-        {/* Toolbar */}
         <div className="rhc-toolbar">
           <div className="rhc-toolbar-row1">
             <div className="rhc-search-wrap">
@@ -868,7 +872,6 @@ const RHCandidatures = () => {
           </div>
         </div>
 
-        {/* Chips */}
         {hasActive && (
           <div className="rhc-chips">
             {search && (
@@ -901,7 +904,6 @@ const RHCandidatures = () => {
           </div>
         )}
 
-        {/* Onglets */}
         <div className="rhc-tabs">
           {TABS.map(tab => (
             <button key={tab.key} className={`rhc-tab${activeTab===tab.key?' active':''}`}
@@ -912,7 +914,6 @@ const RHCandidatures = () => {
           ))}
         </div>
 
-        {/* Table */}
         {loading ? (
           <div className="rhc-loading">
             <span className="material-symbols-outlined rhc-spin">progress_activity</span>
@@ -920,111 +921,102 @@ const RHCandidatures = () => {
           </div>
         ) : (
           <div className="rhc-table-wrap">
-            <table className="rhc-table">
-              <thead className="rhc-thead">
-                <tr>
-                  <th>Candidat</th>
-                  <th>Sujet de stage</th>
-                  <th>Score IA</th>
-                  <th>Score Quiz</th>
-                  <th>Score Entretien</th>
-                  <th>Statut</th>
-                  <th className="right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="rhc-tbody">
-                {paged.length === 0 ? (
-                  <tr><td colSpan={7}>
-                    <div className="rhc-empty">
-                      <span className="material-symbols-outlined">inbox</span>
-                      <p>Aucune candidature trouvée</p>
-                      {hasActive && (
-                        <button className="rhc-filter-btn" onClick={resetF} style={{marginTop:'0.5rem'}}>
-                          Effacer les filtres
-                        </button>
-                      )}
-                    </div>
-                  </td></tr>
-                ) : paged.map(app => {
-                  const rawScore = app.scoreAi;
-                  const s = typeof rawScore === 'number' ? rawScore
-                           : typeof rawScore === 'object' ? (rawScore?.scoreAi ?? null)
-                           : null;
-                  const pct  = s != null ? Math.min(Math.round(s), 100) : null;
-                  const photo = app.candidatPhoto || app.candidat?.photoUrl || null;
-                  return (
-                    <tr key={app.id}>
-                      <td>
-                        <div className="rhc-candidate">
-                          <div className="rhc-avatar"
-                            style={photo ? {backgroundImage:`url(${photo})`,backgroundSize:'cover'} : {}}>
-                            {!photo && getInit(app.candidatNom)}
-                          </div>
-                          <div>
-                            <p className="rhc-cand-name">{app.candidatNom || app.candidat?.nom || '—'}</p>
-                            <p className="rhc-cand-email">{app.candidatEmail || app.candidat?.email || ''}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <p className="rhc-sujet-title">{app.sujetTitre || app.sujet?.titre || '—'}</p>
-                        {(app.sujetDepartement || app.sujet?.departement) && (
-                          <p className="rhc-sujet-dept">{app.sujetDepartement || app.sujet?.departement}</p>
-                        )}
-                      </td>
-                      <td>
-                        {pct != null ? (
-                          <div className="rhc-score-wrap">
-                            <div className="rhc-score-bar">
-                              <div className="rhc-score-fill" style={{width:`${pct}%`}}/>
-                            </div>
-                            <span className="rhc-score-val">{pct}</span>
-                          </div>
-                        ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
-                      </td>
-
-                      {/* ── Score Quiz : bouton cliquable → QuizVideoModal ── */}
-                      <td>
-                        {app.scoreQuiz != null ? (
-                          <button
-                            className="rhc-quiz-badge-btn"
-                            title="Voir quiz et vidéo"
-                          >
-                            <span className="material-symbols-outlined" style={{fontSize:'0.875rem'}}>quiz</span>
-                            {app.scoreQuiz}/50
+            {/* ── Tableau scrollable horizontalement ── */}
+            <div className="rhc-table-scroll">
+              <table className="rhc-table">
+                <thead className="rhc-thead">
+                  <tr>
+                    <th>Candidat</th>
+                    <th>Sujet de stage</th>
+                    <th>Score IA</th>
+                    <th>Score Quiz</th>
+                    <th>Score Entretien</th>
+                    <th>Statut</th>
+                    <th className="right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="rhc-tbody">
+                  {paged.length === 0 ? (
+                    <tr><td colSpan={7}>
+                      <div className="rhc-empty">
+                        <span className="material-symbols-outlined">inbox</span>
+                        <p>Aucune candidature trouvée</p>
+                        {hasActive && (
+                          <button className="rhc-filter-btn" onClick={resetF} style={{marginTop:'0.5rem'}}>
+                            Effacer les filtres
                           </button>
-                        ) : (
-                          <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>
                         )}
-                      </td>
-
-                      {/* ── ✅ Score Entretien (note /10) ── */}
-                      <td>
-                        {app.scoreEntretien != null ? (
-                          <span className="rhc-entretien-badge" title="Note d'entretien">
-                            <span className="material-symbols-outlined" style={{fontSize:'0.875rem'}}>videocam</span>
-                            {app.scoreEntretien}/10
+                      </div>
+                    </td></tr>
+                  ) : paged.map(app => {
+                    const rawScore = app.scoreAi;
+                    const s = typeof rawScore === 'number' ? rawScore
+                             : typeof rawScore === 'object' ? (rawScore?.scoreAi ?? null)
+                             : null;
+                    const pct   = s != null ? Math.min(Math.round(s), 100) : null;
+                    const photo = app.candidatPhoto || app.candidat?.photoUrl || null;
+                    return (
+                      <tr key={app.id}>
+                        <td>
+                          <div className="rhc-candidate">
+                            <div className="rhc-avatar"
+                              style={photo ? {backgroundImage:`url(${photo})`,backgroundSize:'cover'} : {}}>
+                              {!photo && getInit(app.candidatNom)}
+                            </div>
+                            <div>
+                              <p className="rhc-cand-name">{app.candidatNom || app.candidat?.nom || '—'}</p>
+                              <p className="rhc-cand-email">{app.candidatEmail || app.candidat?.email || ''}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <p className="rhc-sujet-title">{app.sujetTitre || app.sujet?.titre || '—'}</p>
+                          {(app.sujetDepartement || app.sujet?.departement) && (
+                            <p className="rhc-sujet-dept">{app.sujetDepartement || app.sujet?.departement}</p>
+                          )}
+                        </td>
+                        <td>
+                          {pct != null ? (
+                            <div className="rhc-score-wrap">
+                              <div className="rhc-score-bar">
+                                <div className="rhc-score-fill" style={{width:`${pct}%`}}/>
+                              </div>
+                              <span className="rhc-score-val">{pct}</span>
+                            </div>
+                          ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
+                        </td>
+                        <td>
+                          {app.scoreQuiz != null ? (
+                            <button className="rhc-quiz-badge-btn" title="Voir quiz et vidéo">
+                              <span className="material-symbols-outlined" style={{fontSize:'0.875rem'}}>quiz</span>
+                              {app.scoreQuiz}/50
+                            </button>
+                          ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
+                        </td>
+                        <td>
+                          {app.scoreEntretien != null ? (
+                            <span className="rhc-entretien-badge">
+                              <span className="material-symbols-outlined" style={{fontSize:'0.875rem'}}>videocam</span>
+                              {app.scoreEntretien}/10
+                            </span>
+                          ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
+                        </td>
+                        <td>
+                          <span className={`rhc-badge ${app.statut}`}>
+                            {LABEL_MAP[app.statut]||app.statut}
                           </span>
-                        ) : (
-                          <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>
-                        )}
-                      </td>
-
-                      <td>
-                        <span className={`rhc-badge ${app.statut}`}>
-                          {LABEL_MAP[app.statut]||app.statut}
-                        </span>
-                      </td>
-                      <td className="right">
-                        <button className="rhc-detail-link" onClick={() => openModal(app)}>
-                          Détails →
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="right">
+                          <button className="rhc-detail-link" onClick={() => openModal(app)}>
+                            Détails →
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
             <div className="rhc-footer">
               <p className="rhc-footer-info">
                 {filtered.length === 0

@@ -7,7 +7,6 @@ const styles = `
   .rhcs-root .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
   body { margin: 0; padding: 0; }
 
-  /* BACK + BANNER */
   .rhcs-back { display: inline-flex; align-items: center; gap: 0.5rem; background: none; border: none; cursor: pointer; font-family: 'Public Sans', sans-serif; font-size: 0.875rem; font-weight: 700; color: #64748b; margin-bottom: 1.5rem; padding: 0; transition: color 0.15s; }
   .rhcs-back:hover { color: #003d7a; }
   .rhcs-back .material-symbols-outlined { font-size: 1.125rem; }
@@ -22,7 +21,6 @@ const styles = `
   .rhcs-stat-num { font-size: 1.75rem; font-weight: 900; line-height: 1; }
   .rhcs-stat-lbl { font-size: 0.5625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.6); margin-top: 0.25rem; }
 
-  /* TOOLBAR */
   .rhcs-toolbar { display: flex; flex-direction: column; gap: 0.875rem; margin-bottom: 1.5rem; }
   .rhcs-toolbar-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
   .rhcs-search-wrap { flex: 1; min-width: 200px; position: relative; }
@@ -37,9 +35,11 @@ const styles = `
   .rhcs-filter-btn:hover { background: #f8fafc; }
   .rhcs-filter-btn .material-symbols-outlined { font-size: 1.125rem; }
 
-  /* TABLE */
   .rhcs-table-wrap { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; }
-  .rhcs-table { width: 100%; text-align: left; border-collapse: collapse; }
+  .rhcs-table-scroll { overflow-x: auto; }
+  .rhcs-table-scroll::-webkit-scrollbar { height: 4px; }
+  .rhcs-table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  .rhcs-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 780px; }
   .rhcs-thead tr { background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
   .rhcs-thead th { padding: 1rem 1.5rem; font-size: 0.625rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
   .rhcs-thead th.right { text-align: right; }
@@ -73,8 +73,6 @@ const styles = `
 
   .rhcs-quiz-badge-btn { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.5rem; border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 700; background: rgba(124,58,237,0.08); color: #003d7a; border: 1px solid rgba(124,58,237,0.2); cursor: pointer; font-family: 'Public Sans', sans-serif; transition: background 0.15s; }
   .rhcs-quiz-badge-btn:hover { background: rgba(124,58,237,0.15); }
-
-  /* ✅ Badge entretien (note /10) */
   .rhcs-entretien-badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.5rem; border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 700; background: rgba(5,150,105,0.08); color: #059669; border: 1px solid rgba(5,150,105,0.2); }
   .rhcs-entretien-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
   .rhcs-ent-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
@@ -95,7 +93,6 @@ const styles = `
   .rhcs-detail-link { color: #003d7a; font-size: 0.8125rem; font-weight: 700; background: none; border: none; cursor: pointer; font-family: 'Public Sans', sans-serif; padding: 0.375rem 0.875rem; border-radius: 0.5rem; transition: background 0.15s; }
   .rhcs-detail-link:hover { background: rgba(0,61,122,0.06); }
 
-  /* PAGINATION */
   .rhcs-footer { padding: 1rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
   .rhcs-footer-info { font-size: 0.75rem; color: #64748b; font-weight: 600; }
   .rhcs-pages { display: flex; gap: 0.375rem; }
@@ -104,7 +101,6 @@ const styles = `
   .rhcs-page-btn.active { background: #003d7a; color: #fff; border-color: #003d7a; }
   .rhcs-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-  /* STATES */
   @keyframes rhcs-spin { to { transform: rotate(360deg); } }
   .rhcs-spin { animation: rhcs-spin 0.8s linear infinite; color: #003d7a; }
   .rhcs-loading { display: flex; align-items: center; justify-content: center; padding: 5rem; gap: 0.75rem; color: #64748b; font-size: 0.875rem; font-weight: 600; }
@@ -112,14 +108,12 @@ const styles = `
   .rhcs-empty { text-align: center; padding: 5rem 2rem; color: #94a3b8; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
   .rhcs-empty .material-symbols-outlined { font-size: 3rem; color: #cbd5e1; }
 
-  /* TOAST */
   @keyframes rhcs-toast-in { from { opacity: 0; transform: translateY(1rem); } to { opacity: 1; transform: translateY(0); } }
   .rhcs-toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; background: #0f172a; color: #fff; padding: 1rem 1.5rem; border-radius: 0.75rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; font-weight: 600; font-family: 'Public Sans', sans-serif; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); animation: rhcs-toast-in 0.3s ease; }
   .rhcs-toast .material-symbols-outlined { font-size: 1.25rem; }
   .rhcs-toast.success .material-symbols-outlined { color: #22c55e; }
   .rhcs-toast.error   .material-symbols-outlined { color: #ef4444; }
 
-  /* ── MODAL DÉTAIL (même design que RHCandidatures) ── */
   .rhcs-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
   .rhcs-overlay-bg { position: absolute; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); }
   .rhcs-modal { position: relative; background: #fff; width: 100%; max-width: 56rem; max-height: 95vh; display: flex; flex-direction: column; border-radius: 1rem; box-shadow: 0 25px 60px rgba(0,0,0,0.3); overflow: hidden; }
@@ -188,16 +182,24 @@ const styles = `
   .rhcs-footer-action-btn.cv:hover { background: rgba(0,61,122,0.1); }
   .rhcs-btn-back { padding: 0.625rem 1.5rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #fff; font-size: 0.875rem; font-weight: 700; color: #475569; cursor: pointer; font-family: 'Public Sans', sans-serif; }
 
-  /* CV popup */
+  /* ── CV Popup — proxy blob (identique MonProfil) ── */
   .rhcs-cv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-  .rhcs-cv-popup { background: #fff; border-radius: 0.875rem; width: 100%; max-width: 56rem; height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
+  .rhcs-cv-popup { background: #fff; border-radius: 0.875rem; width: 100%; max-width: 56rem; height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.35); }
   .rhcs-cv-popup-header { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1.25rem; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
   .rhcs-cv-popup-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 700; color: #0f172a; }
-  .rhcs-cv-popup-close { width: 2rem; height: 2rem; border: none; background: #f1f5f9; border-radius: 0.375rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .rhcs-cv-popup-body { flex: 1; overflow: hidden; }
+  .rhcs-cv-popup-title .material-symbols-outlined { color: #003d7a; }
+  .rhcs-cv-popup-close { width: 2rem; height: 2rem; border: none; background: #f1f5f9; border-radius: 0.375rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+  .rhcs-cv-popup-close:hover { background: #e2e8f0; }
+  .rhcs-cv-popup-body { flex: 1; overflow: hidden; position: relative; }
   .rhcs-cv-popup-body iframe { width: 100%; height: 100%; border: none; }
-  .rhcs-cv-popup-footer { padding: 0.75rem 1.25rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; flex-shrink: 0; }
-  .rhcs-cv-popup-dl { padding: 0.5rem 1.25rem; background: #003d7a; color: #fff; border: none; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 700; cursor: pointer; font-family: 'Public Sans', sans-serif; display: flex; align-items: center; gap: 0.375rem; text-decoration: none; }
+  .rhcs-cv-popup-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: .75rem; color: #64748b; font-size: .875rem; }
+  .rhcs-cv-popup-loading .material-symbols-outlined { font-size: 1.75rem; color: #003d7a; animation: rhcs-spin .8s linear infinite; }
+  .rhcs-cv-popup-no-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1rem; color: #94a3b8; }
+  .rhcs-cv-popup-no-preview .material-symbols-outlined { font-size: 3rem; color: #cbd5e1; }
+  .rhcs-cv-popup-footer { padding: .75rem 1.25rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; flex-shrink: 0; }
+  .rhcs-cv-popup-dl { padding: .5rem 1.25rem; background: #003d7a; color: #fff; border: none; border-radius: .5rem; font-size: .8125rem; font-weight: 700; display: flex; align-items: center; gap: .375rem; cursor: pointer; font-family: 'Public Sans', sans-serif; transition: background .15s; }
+  .rhcs-cv-popup-dl:hover { background: #002a5c; }
+  .rhcs-cv-popup-dl .material-symbols-outlined { font-size: 1rem; }
 
   /* Quiz/Video popup */
   .rhcs-qv-modal { position: relative; background: #fff; width: 100%; max-width: 42rem; max-height: 95vh; display: flex; flex-direction: column; border-radius: 1rem; box-shadow: 0 25px 60px rgba(0,0,0,0.3); overflow: hidden; }
@@ -326,7 +328,6 @@ const QuizVideoModal = ({ data, onClose }) => {
           </button>
         </div>
         <div className="rhcs-modal-body">
-          {/* Quiz */}
           <div className="rhcs-quiz-section">
             <div className="rhcs-quiz-sec-header">
               <div className="rhcs-quiz-sec-left">
@@ -381,7 +382,6 @@ const QuizVideoModal = ({ data, onClose }) => {
               <div className="rhcs-quiz-no-data">Le candidat n'a pas encore passé le quiz.</div>
             )}
           </div>
-          {/* Vidéo */}
           <div className="rhcs-video-section">
             <div className="rhcs-video-header">
               <div className="rhcs-video-header-left">
@@ -435,7 +435,11 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
   const [toast,          setToast]          = useState(null);
   const [detail,         setDetail]         = useState(null);
   const [modalLoading,   setModalLoading]   = useState(false);
+  // ── CV popup — proxy blob (même logique que MonProfil) ───────────────────
   const [showCv,         setShowCv]         = useState(false);
+  const [cvBlobUrl,      setCvBlobUrl]      = useState(null);
+  const [cvBlobLoading,  setCvBlobLoading]  = useState(false);
+  // ─────────────────────────────────────────────────────────────────────────
   const [quizVideoModal, setQuizVideoModal] = useState(null);
 
   const fetchCandidatures = async () => {
@@ -454,14 +458,50 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
   };
 
   const openModal = async (app) => {
-    setDetail(null); setShowCv(false); setModalLoading(true);
+    setDetail(null); closeCvBlob(); setModalLoading(true);
     try {
       const { data } = await axios.get(`/api/candidatures/${app.id}`);
       setDetail(data);
     } catch { showToastFn('Erreur chargement dossier', 'error'); }
     finally { setModalLoading(false); }
   };
-  const closeModal = () => { setDetail(null); setShowCv(false); };
+
+  const closeModal = () => { closeCvBlob(); setDetail(null); };
+
+  // ── Ouvre le CV via proxy Spring Boot → blob URL (GET /api/files/cv/{userId}) ──
+ const openCvBlob = async () => {
+  if (!detail) return;
+  const userId = detail.candidat?.id ?? detail.candidatId;
+  if (!userId) return;
+
+  setShowCv(true);
+  setCvBlobUrl(null);
+  setCvBlobLoading(true);
+  try {
+    const { data } = await axios.get(`/api/files/cv/${userId}/url`, {
+      withCredentials: true,
+    });
+    // Ouvre directement la signed URL dans l'iframe — le browser a accès Internet
+    setCvBlobUrl(data.url);
+  } catch (e) {
+    console.error('[openCvBlob]', e.message);
+    setCvBlobUrl(null);
+  } finally {
+    setCvBlobLoading(false);
+  }
+};
+  const closeCvBlob = () => {
+    if (cvBlobUrl) URL.revokeObjectURL(cvBlobUrl);
+    setCvBlobUrl(null);
+    setShowCv(false);
+  };
+
+  const downloadCvBlob = () => {
+    if (!cvBlobUrl) return;
+    const a = document.createElement('a');
+    a.href = cvBlobUrl; a.download = cvName || 'cv.pdf';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
 
   const openQuizVideo = (e, app) => {
     e.stopPropagation();
@@ -480,13 +520,14 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
   useEffect(() => {
     const fn = e => {
       if (e.key === 'Escape') {
+        if (showCv)         { closeCvBlob(); return; }
         if (quizVideoModal) { setQuizVideoModal(null); return; }
-        closeModal(); setShowCv(false);
+        closeModal();
       }
     };
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
-  }, [quizVideoModal]);
+  }, [quizVideoModal, showCv, cvBlobUrl]);
 
   const filtered = useMemo(() => {
     let list = [...candidatures];
@@ -524,7 +565,6 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
       <style>{styles}</style>
       <div className="rhcs-root">
 
-        {/* Toast */}
         {toast && (
           <div className={`rhcs-toast ${toast.type}`}>
             <span className="material-symbols-outlined">{toast.type==='success'?'check_circle':'error'}</span>
@@ -532,28 +572,48 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
           </div>
         )}
 
-        {/* Quiz + Video popup */}
         {quizVideoModal && (
           <QuizVideoModal data={quizVideoModal} onClose={() => setQuizVideoModal(null)}/>
         )}
 
-        {/* CV popup */}
-        {showCv && cvUrl && (
-          <div className="rhcs-cv-overlay" onClick={() => setShowCv(false)}>
+        {/* ── CV Popup — proxy blob (comme MonProfil) ── */}
+        {showCv && (
+          <div className="rhcs-cv-overlay" onClick={closeCvBlob}>
             <div className="rhcs-cv-popup" onClick={e => e.stopPropagation()}>
               <div className="rhcs-cv-popup-header">
                 <div className="rhcs-cv-popup-title">
-                  <span className="material-symbols-outlined">picture_as_pdf</span>{cvName}
+                  <span className="material-symbols-outlined">picture_as_pdf</span>
+                  {cvName}
                 </div>
-                <button className="rhcs-cv-popup-close" onClick={() => setShowCv(false)}>
+                <button type="button" className="rhcs-cv-popup-close" onClick={closeCvBlob}>
                   <span className="material-symbols-outlined" style={{fontSize:'1.125rem'}}>close</span>
                 </button>
               </div>
-              <div className="rhcs-cv-popup-body"><iframe src={cvUrl} title="CV"/></div>
+              <div className="rhcs-cv-popup-body">
+                {cvBlobLoading ? (
+                  <div className="rhcs-cv-popup-loading">
+                    <span className="material-symbols-outlined">progress_activity</span>
+                    Chargement du document...
+                  </div>
+                ) : cvBlobUrl ? (
+                  <iframe src={cvBlobUrl} title={cvName} />
+                ) : (
+                  <div className="rhcs-cv-popup-no-preview">
+                    <span className="material-symbols-outlined">error_outline</span>
+                    <p style={{fontSize:'.875rem',color:'#64748b'}}>Impossible de charger le document.</p>
+                  </div>
+                )}
+              </div>
               <div className="rhcs-cv-popup-footer">
-                <a href={cvUrl} download={cvName} className="rhcs-cv-popup-dl">
-                  <span className="material-symbols-outlined">download</span>Télécharger
-                </a>
+                <button
+                  type="button"
+                  className="rhcs-cv-popup-dl"
+                  onClick={downloadCvBlob}
+                  disabled={!cvBlobUrl}
+                >
+                  <span className="material-symbols-outlined">download</span>
+                  Télécharger
+                </button>
               </div>
             </div>
           </div>
@@ -589,7 +649,6 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
                     Chargement du dossier...
                   </div>
                 ) : detail && (<>
-                  {/* Infos + score wheel */}
                   <div className="rhcs-modal-top">
                     <div className="rhcs-info-card">
                       <p className="rhcs-info-card-title">
@@ -635,7 +694,6 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
                     </div>
                   </div>
 
-                  {/* Sujet */}
                   <div className="rhcs-sujet-banner-modal">
                     <div className="rhcs-sujet-banner-icon"><span className="material-symbols-outlined">work</span></div>
                     <div style={{flex:1}}>
@@ -654,7 +712,6 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
                     </div>
                   </div>
 
-                  {/* Analyse IA + critères */}
                   <div className="rhcs-ai-grid">
                     <div>
                       <p className="rhcs-ai-title">
@@ -706,19 +763,16 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
                     </div>
                   </div>
 
-                  {/* Lettre */}
                   <div className="rhcs-lettre-box">
                     <p className="rhcs-lettre-title">Lettre de motivation</p>
                     <p className="rhcs-lettre-text">{detail.lettreMotivation||'—'}</p>
                   </div>
 
-                  {/* ✅ Section Entretien */}
                   {(detail.scoreEntretien != null || detail.entretienStatut) && (
                     <div className="rhcs-entretien-section">
                       <div className="rhcs-ent-header">
                         <p className="rhcs-ent-title">
-                          <span className="material-symbols-outlined">videocam</span>
-                          Entretien
+                          <span className="material-symbols-outlined">videocam</span>Entretien
                         </p>
                         {detail.scoreEntretien != null && (
                           <div className="rhcs-ent-note-pill">
@@ -727,34 +781,14 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
                           </div>
                         )}
                       </div>
-
                       <div className="rhcs-ent-grid">
-                        <div className="rhcs-ent-field">
-                          <label>Statut</label>
-                          <p>
-                            <span className={`rhcs-ent-badge-status ${detail.entretienStatut||''}`}>
-                              {detail.entretienStatut || '—'}
-                            </span>
-                          </p>
-                        </div>
-                        <div className="rhcs-ent-field">
-                          <label>Date</label>
-                          <p>{detail.dateEntretien || '—'}</p>
-                        </div>
-                        <div className="rhcs-ent-field">
-                          <label>Heure début</label>
-                          <p>{detail.entretienHeureDebut || '—'}</p>
-                        </div>
-                        <div className="rhcs-ent-field">
-                          <label>Heure fin</label>
-                          <p>{detail.entretienHeureFin || '—'}</p>
-                        </div>
+                        <div className="rhcs-ent-field"><label>Statut</label><p><span className={`rhcs-ent-badge-status ${detail.entretienStatut||''}`}>{detail.entretienStatut||'—'}</span></p></div>
+                        <div className="rhcs-ent-field"><label>Date</label><p>{detail.dateEntretien||'—'}</p></div>
+                        <div className="rhcs-ent-field"><label>Heure début</label><p>{detail.entretienHeureDebut||'—'}</p></div>
+                        <div className="rhcs-ent-field"><label>Heure fin</label><p>{detail.entretienHeureFin||'—'}</p></div>
                       </div>
-
                       <div>
-                        <label style={{fontSize:'0.5625rem',fontWeight:800,textTransform:'uppercase',letterSpacing:'0.1em',color:'#94a3b8',display:'block',marginBottom:'0.5rem'}}>
-                          Remarques du RH
-                        </label>
+                        <label style={{fontSize:'0.5625rem',fontWeight:800,textTransform:'uppercase',letterSpacing:'0.1em',color:'#94a3b8',display:'block',marginBottom:'0.5rem'}}>Remarques du RH</label>
                         <div className="rhcs-ent-notes">
                           {detail.notesRh && detail.notesRh.trim()
                             ? detail.notesRh
@@ -769,7 +803,7 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
               <div className="rhcs-modal-footer">
                 <div className="rhcs-footer-left">
                   {cvUrl && (
-                    <button className="rhcs-footer-action-btn cv" onClick={() => setShowCv(true)}>
+                    <button className="rhcs-footer-action-btn cv" onClick={openCvBlob}>
                       <span className="material-symbols-outlined">picture_as_pdf</span>Voir le CV
                     </button>
                   )}
@@ -844,7 +878,7 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
           </div>
         </div>
 
-        {/* Table */}
+        {/* ── Tableau scrollable horizontalement ── */}
         {loading ? (
           <div className="rhcs-loading">
             <span className="material-symbols-outlined rhcs-spin">progress_activity</span>
@@ -852,81 +886,78 @@ const RHCandidaturesSujet = ({ sujet, onBack }) => {
           </div>
         ) : (
           <div className="rhcs-table-wrap">
-            <table className="rhcs-table">
-              <thead className="rhcs-thead">
-                <tr>
-                  <th>Candidat</th>
-                  <th>Score IA</th>
-                  <th>Score Quiz</th>
-                  <th>Score Entretien</th>
-                  <th>Date dépôt</th>
-                  <th>Statut</th>
-                  <th className="right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="rhcs-tbody">
-                {paged.length === 0 ? (
-                  <tr><td colSpan={7}>
-                    <div className="rhcs-empty">
-                      <span className="material-symbols-outlined">inbox</span>
-                      <p>Aucune candidature{filterStatut ? ' pour ce statut' : ''}</p>
-                    </div>
-                  </td></tr>
-                ) : paged.map(c => {
-                  const pct   = c.scoreAi != null ? Math.min(Math.round(c.scoreAi), 100) : null;
-                  const photo = c.candidatPhoto || null;
-                  return (
-                    <tr key={c.id}>
-                      <td>
-                        <div className="rhcs-candidate">
-                          <div className="rhcs-avatar" style={photo?{backgroundImage:`url(${photo})`,backgroundSize:'cover'}:{}}>
-                            {!photo && getInit(c.candidatNom)}
+            <div className="rhcs-table-scroll">
+              <table className="rhcs-table">
+                <thead className="rhcs-thead">
+                  <tr>
+                    <th>Candidat</th>
+                    <th>Score IA</th>
+                    <th>Score Quiz</th>
+                    <th>Score Entretien</th>
+                    <th>Date dépôt</th>
+                    <th>Statut</th>
+                    <th className="right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="rhcs-tbody">
+                  {paged.length === 0 ? (
+                    <tr><td colSpan={7}>
+                      <div className="rhcs-empty">
+                        <span className="material-symbols-outlined">inbox</span>
+                        <p>Aucune candidature{filterStatut ? ' pour ce statut' : ''}</p>
+                      </div>
+                    </td></tr>
+                  ) : paged.map(c => {
+                    const pct   = c.scoreAi != null ? Math.min(Math.round(c.scoreAi), 100) : null;
+                    const photo = c.candidatPhoto || null;
+                    return (
+                      <tr key={c.id}>
+                        <td>
+                          <div className="rhcs-candidate">
+                            <div className="rhcs-avatar" style={photo?{backgroundImage:`url(${photo})`,backgroundSize:'cover'}:{}}>
+                              {!photo && getInit(c.candidatNom)}
+                            </div>
+                            <div>
+                              <p className="rhcs-cand-name">{c.candidatNom||'—'}</p>
+                              <p className="rhcs-cand-email">{c.candidatEmail||''}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="rhcs-cand-name">{c.candidatNom||'—'}</p>
-                            <p className="rhcs-cand-email">{c.candidatEmail||''}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        {pct != null ? (
-                          <div className="rhcs-score-wrap">
-                            <div className="rhcs-score-bar"><div className="rhcs-score-fill" style={{width:`${pct}%`}}/></div>
-                            <span className="rhcs-score-val">{pct}</span>
-                          </div>
-                        ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
-                      </td>
-                      <td>
-                        {c.scoreQuiz != null ? (
-                          <button className="rhcs-quiz-badge-btn"
-                            onClick={(e) => openQuizVideo(e, c)}
-                            title="Voir quiz et vidéo">
-                            <span className="material-symbols-outlined" style={{fontSize:'0.875rem'}}>quiz</span>
-                            {c.scoreQuiz}/50
-                          </button>
-                        ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
-                      </td>
-
-                      {/* ── ✅ Score Entretien (note /10) ── */}
-                      <td>
-                        {c.scoreEntretien != null ? (
-                          <span className="rhcs-entretien-badge" title="Note d'entretien">
-                            <span className="material-symbols-outlined" style={{fontSize:'0.875rem'}}>videocam</span>
-                            {c.scoreEntretien}/10
-                          </span>
-                        ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
-                      </td>
-
-                      <td><span style={{fontSize:'0.875rem',color:'#475569'}}>{c.dateDepot||'—'}</span></td>
-                      <td><span className={`rhcs-badge ${c.statut}`}>{LABEL_MAP[c.statut]||c.statut}</span></td>
-                      <td className="right">
-                        <button className="rhcs-detail-link" onClick={() => openModal(c)}>Détails →</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td>
+                          {pct != null ? (
+                            <div className="rhcs-score-wrap">
+                              <div className="rhcs-score-bar"><div className="rhcs-score-fill" style={{width:`${pct}%`}}/></div>
+                              <span className="rhcs-score-val">{pct}</span>
+                            </div>
+                          ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
+                        </td>
+                        <td>
+                          {c.scoreQuiz != null ? (
+                            <button className="rhcs-quiz-badge-btn" onClick={(e) => openQuizVideo(e, c)} title="Voir quiz et vidéo">
+                              <span className="material-symbols-outlined" style={{fontSize:'0.875rem'}}>quiz</span>
+                              {c.scoreQuiz}/50
+                            </button>
+                          ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
+                        </td>
+                        <td>
+                          {c.scoreEntretien != null ? (
+                            <span className="rhcs-entretien-badge">
+                              <span className="material-symbols-outlined" style={{fontSize:'0.875rem'}}>videocam</span>
+                              {c.scoreEntretien}/10
+                            </span>
+                          ) : <span style={{fontSize:'0.75rem',color:'#94a3b8'}}>—</span>}
+                        </td>
+                        <td><span style={{fontSize:'0.875rem',color:'#475569'}}>{c.dateDepot||'—'}</span></td>
+                        <td><span className={`rhcs-badge ${c.statut}`}>{LABEL_MAP[c.statut]||c.statut}</span></td>
+                        <td className="right">
+                          <button className="rhcs-detail-link" onClick={() => openModal(c)}>Détails →</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
             <div className="rhcs-footer">
               <p className="rhcs-footer-info">
                 {filtered.length===0?'0 candidature':`${(page-1)*PAGE_SIZE+1}–${Math.min(page*PAGE_SIZE,filtered.length)} sur ${filtered.length} candidature${filtered.length>1?'s':''}`}

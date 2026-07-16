@@ -30,21 +30,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        System.out.println("=== JwtAuthenticationFilter exécuté pour : " + request.getRequestURI() + " ===");
+       // System.out.println("=== JwtAuthenticationFilter exécuté pour : " + request.getRequestURI() + " ===");
         try {
             String jwt = parseJwtFromCookie(request);
-            System.out.println("JWT depuis cookie : " + jwt);
+          //  System.out.println("JWT depuis cookie : " + jwt);
             if (jwt != null) {
                 if (jwtUtils.validateJwtToken(jwt)) {
-                    System.out.println("JWT valide");
+               //     System.out.println("JWT valide");
                     String username = jwtUtils.getUserNameFromJwtToken(jwt);
-                    System.out.println("Username extrait : " + username);
+                  //  System.out.println("Username extrait : " + username);
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("Authentification placée dans le contexte");
+                    //System.out.println("Authentification placée dans le contexte");
                 } else {
                     System.out.println("JWT invalide");
                 }

@@ -61,44 +61,5 @@ public class CandidatureEmailService {
         }
     }
 
-    @Scheduled(cron = "0 0 0 1 1 ?") // chaque 1 janvier à minuit
-    @Transactional
-    public void phase1() {
 
-        log.info("🚀 Début batch global recrutement");
-
-        try {
-            // ─────────────────────────────
-            // 1. ARCHIVER LES SUJETS
-            // ─────────────────────────────
-            List<SujetStage> sujets = sujetRepository.findAll();
-
-            sujets.forEach(s -> s.setStatut(StatutSujet.ARCHIVE));
-            sujetRepository.saveAll(sujets);
-
-            log.info("✅ Sujets archivés : {}", sujets.size());
-
-            // ─────────────────────────────
-            // 2. FILTRAGE GLOBAL
-            // ─────────────────────────────
-            Map<String, Object> resultatFiltrage =
-                    filtrageService.filtrerTousLesSujets();
-
-            log.info("✅ Filtrage terminé"+ resultatFiltrage);
-
-            // ─────────────────────────────
-            // 3. ENVOI DES EMAILS
-            // ─────────────────────────────
-            List<Map<String, Object>> candidatures =
-                    candidatureService.getAllCandidatures();
-
-            sendEmailsForCandidatures(candidatures);
-            log.info("📧 Emails envoyés");
-
-            log.info("🎯 Batch terminé avec succès");
-
-        } catch (Exception e) {
-            log.error("❌ Erreur batch recrutement : {}", e.getMessage(), e);
-        }
-    }
 }

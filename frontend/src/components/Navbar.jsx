@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNotif } from '../context/NotifContext';
 import axios from 'axios';
 import bctImage from '../assets/bct.png';
 
@@ -28,12 +29,16 @@ const styles = `
   .db-nav a:hover { color: #00007a; }
   .db-nav a.active { font-weight: 700; color: #00007a; border-bottom: 2px solid #00007a; }
   .db-header-actions { display: flex; align-items: center; gap: 1rem; }
+
+  /* Bouton notif */
   .db-notif-btn {
     position: relative; padding: 0.5rem; background: none; border: none;
     color: #475569; border-radius: 9999px; cursor: pointer; transition: background 0.2s;
   }
   .db-notif-btn:hover { background: #f1f5f9; }
   .db-notif-btn .material-symbols-outlined { font-size: 1.5rem; display: block; }
+
+  /* Badge point rouge animé */
   .db-notif-badge { position: absolute; top: 0.5rem; right: 0.5rem; width: 0.5rem; height: 0.5rem; }
   .db-notif-ping {
     position: absolute; width: 100%; height: 100%; border-radius: 9999px;
@@ -42,6 +47,18 @@ const styles = `
   }
   @keyframes ping { 75%,100% { transform: scale(2); opacity: 0; } }
   .db-notif-dot { position: relative; width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: #ef4444; }
+
+  /* Badge chiffre (ex: 3) affiché si > 0 */
+  .db-notif-count-badge {
+    position: absolute; top: 0.125rem; right: 0.125rem;
+    min-width: 1.125rem; height: 1.125rem; border-radius: 9999px;
+    background: #ef4444; color: #fff;
+    font-size: 0.5625rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 0.2rem; line-height: 1;
+    border: 2px solid #fff;
+  }
+
   .db-divider { width: 1px; height: 2rem; background: #e2e8f0; margin: 0 0.5rem; }
   .db-user-info { display: none; text-align: right; }
   @media (min-width: 640px) { .db-user-info { display: block; } }
@@ -72,6 +89,8 @@ const navItems = [
 
 const Navbar = () => {
   const { user } = useAuth();
+  // ── Notifications temps réel ──────────────────────────────────────────
+  const { unreadCount } = useNotif() ?? { unreadCount: 0 };
 
   const handleLogout = async () => {
     try {
@@ -82,8 +101,6 @@ const Navbar = () => {
     }
   };
 
-  // URL Cloudinary déjà absolue (https://res.cloudinary.com/...)
-  // plus besoin d'ajouter '/' devant
   const avatarStyle = user?.photoUrl
     ? { backgroundImage: `url('${user.photoUrl}')` }
     : {};
@@ -112,27 +129,41 @@ const Navbar = () => {
           </nav>
 
           <div className="db-header-actions">
+
+            {/* ── Bouton notifications avec badge dynamique ── */}
             <button className="db-notif-btn" aria-label="Notifications">
               <span className="material-symbols-outlined">notifications</span>
-              <span className="db-notif-badge">
-                <span className="db-notif-ping"></span>
-                <span className="db-notif-dot"></span>
-              </span>
+
+              {/* Badge point animé si non-lues */}
+              {unreadCount > 0 && (
+                <span className="db-notif-badge">
+                  <span className="db-notif-ping" />
+                  <span className="db-notif-dot" />
+                </span>
+              )}
+
+              {/* Badge chiffre exact si > 1 */}
+              {unreadCount > 1 && (
+                <span className="db-notif-count-badge">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
-            <div className="db-divider"></div>
+
+            <div className="db-divider" />
+
             <div className="db-user-info">
               <p>{user?.name ?? 'Candidat'}</p>
               <p>Candidat</p>
             </div>
 
-            {/* ── Avatar — URL Cloudinary directe ── */}
             <div className="db-avatar" style={avatarStyle} />
 
             <button className="db-logout-btn" onClick={handleLogout} aria-label="Se déconnecter">
               <span className="material-symbols-outlined">logout</span>
             </button>
-          </div>
 
+          </div>
         </div>
       </header>
     </>

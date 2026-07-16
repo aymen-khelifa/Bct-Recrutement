@@ -2,6 +2,8 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import ChatbotWidget from './ChatbotWidget';
+import bctImage from '../assets/bct.png';
+
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
@@ -88,12 +90,8 @@ const AdminLayout = () => {
 
         {/* ── SIDEBAR ── */}
         <aside className="adm-aside">
-          <div className="adm-aside-brand">
-            <span className="material-symbols-outlined">admin_panel_settings</span>
-            <div>
-              <h1>Banque Centrale</h1>
-              <p>Administration</p>
-            </div>
+          <div className="rh-aside-brand">
+            <img src={bctImage} alt="BCT" style={{ marginLeft:'11%', width: '220px', filter: 'brightness(0) invert(1)' }} />
           </div>
 
           <nav className="adm-nav">

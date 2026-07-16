@@ -123,7 +123,7 @@ const labelMap = {
 };
 const getLabel = (app) => app.statutLabel || labelMap[app.statut] || app.statut || '—';
 
-const Mescandidatures = () => {
+const MesCandidatures = () => {
   const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [loadingApps,  setLoadingApps]  = useState(true);
@@ -263,4 +263,4 @@ const Mescandidatures = () => {
   );
 };
 
-export default Mescandidatures;
+export default MesCandidatures;

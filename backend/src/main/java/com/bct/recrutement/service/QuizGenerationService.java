@@ -132,7 +132,7 @@ public class QuizGenerationService {
         } catch (Exception e) {
             throw new RuntimeException(
                     "Service Python inaccessible sur " + generatorUrl + " : " + e.getMessage() +
-                            "\nVérifiez que Python tourne (PowerShell : python quiz_generator_service.py --port 5000)"
+                            "\nVérifiez que Python tourne (PowerShell : --port 5000)"
             );
         }
 

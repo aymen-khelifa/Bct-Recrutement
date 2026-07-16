@@ -1,42 +1,42 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthProvider';
-import Layout from './components/CandidatLayout';
-import RHLayout from './components/RHlayout';
-import CandidatLayout from './components/CandidatLayout'; // ← nouveau
-import MesCandidatures from './pages/Candidat/MesCandidatures_new.jsx';
-import DetailCandidature from './pages/Candidat/DetailCandidature_new.jsx';
-import HomePage from './pages/Auth/HomePage';
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import VerifyOtp from './pages/Auth/VerifyOtp';
-import VerifyOtpRoute from './components/VerifyOtpRoute';
-import RHCalendrierEntretiens from './pages/RH/RHCalendrierEntretiens';
-import EntretienLive from './pages/RH/EntretienLive';
-import AdminLayout from './components/AdminLayout';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import AdminUtilisateurs from './pages/Admin/AdminUtilisateurs';
+import { AuthProvider } from './context/AuthProvider.jsx';
+import Layout from './components/CandidatLayout.jsx';
+import RHLayout from './components/RHlayout.jsx';
+import CandidatLayout from './components/CandidatLayout.jsx'; // ← nouveau
+import MesCandidatures from './pages/Candidat/MesCandidatures.jsx';
+import DetailCandidature from './pages/Candidat/DetailCandidature.jsx';
+import HomePage from './pages/Auth/HomePage.jsx';
+import Login from './pages/Auth/Login.jsx';
+import Register from './pages/Auth/Register.jsx';
+import VerifyOtp from './pages/Auth/VerifyOtp.jsx';
+import VerifyOtpRoute from './components/VerifyOtpRoute.jsx';
+import RHCalendrierEntretiens from './pages/RH/RHCalendrierEntretiens.jsx';
+import EntretienLive from './pages/RH/EntretienLive.jsx';
+import AdminLayout from './components/AdminLayout.jsx';
+import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
+import AdminUtilisateurs from './pages/Admin/AdminUtilisateurs.jsx';
 
-import RoleBasedRoute from './components/RoleBasedRoute';
+import RoleBasedRoute from './components/RoleBasedRoute.jsx';
 // Pages Candidat
-import CandidatDashboard from './pages/Candidat/Dashboard';
-import Unauthorized from './pages/Auth/Unauthorized';
+import CandidatDashboard from './pages/Candidat/Dashboard.jsx';
+import Unauthorized from './pages/Auth/Unauthorized.jsx';
 
-import CandidatProfil from './pages/Candidat/Monprofil';
+import CandidatProfil from './pages/Candidat/Monprofil.jsx';
 
-import RHCandidats from './pages/RH/Rhcandidatures';
-import Rhsujet from './pages/RH/Rhsujet';
-import Rhquizsujet from './pages/RH/Rhquizgestion';
-import CandidatQuiz from './pages/Candidat/Candidatquiz';
-import ForgotPassword from './pages/Auth/ForgotPassword';
-import ResetPassword from './pages/Auth/ResetPassword';
+import RHCandidats from './pages/RH/Rhcandidatures.jsx';
+import Rhsujet from './pages/RH/RHSujets.jsx';
+import Rhquizsujet from './pages/RH/RHQuizEditor.jsx';
+import CandidatQuiz from './pages/Candidat/Candidatquiz.jsx';
+import ForgotPassword from './pages/Auth/ForgotPassword.jsx';
+import ResetPassword from './pages/Auth/ResetPassword.jsx';
 
-import CandidatOffres from './pages/Candidat/Offers';
+import CandidatOffres from './pages/Candidat/Offers.jsx';
 //import CandidatApplications from './pages/candidat/Applications';
 // Pages RH
-import RHDashboard from './pages/RH/Rhdashboard';
-import PublicRoute from './components/PublicRoute'; // Importer le composant
-import RHParametres from './pages/RH/Rhparametres';
-import RHEntretiens from './pages/RH/Rhplanifierentretiens';
+import RHDashboard from './pages/RH/RHDashboard.jsx';
+import PublicRoute from './components/PublicRoute.jsx'; // Importer le composant
+import RHParametres from './pages/RH/RHParametres.jsx';
+import RHEntretiens from './pages/RH/RHPlanifierEntretiens.jsx';
 
 function App() {
   return (

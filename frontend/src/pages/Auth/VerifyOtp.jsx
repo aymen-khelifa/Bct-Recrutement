@@ -294,8 +294,9 @@ const handleResend = async () => {
               <p>Plateforme de Recrutement</p>
             </div>
           </div>
-          <button className="otp-help-btn">
-            <span className="material-symbols-outlined">help_outline</span>
+          
+          <button className="otp-help-btn" onClick={() => window.location.href = '/'}>
+            <span className="material-symbols-outlined">arrow_back</span>
           </button>
         </header>
 
