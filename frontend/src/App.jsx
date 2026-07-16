@@ -3,18 +3,18 @@ import { AuthProvider } from './context/AuthProvider';
 import Layout from './components/CandidatLayout';
 import RHLayout from './components/RHlayout';
 import CandidatLayout from './components/CandidatLayout'; // ← nouveau
-import MesCandidatures from './pages/Candidat/mescandidatures';
+import MesCandidatures from './pages/Candidat/Mescandidatures';
 import DetailCandidature from './pages/Candidat/Detailcandidature';
 import HomePage from './pages/Auth/HomePage';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import VerifyOtp from './pages/Auth/VerifyOtp';
 import VerifyOtpRoute from './components/VerifyOtpRoute';
-import RHCalendrierEntretiens from './pages/rh/RHCalendrierEntretiens';
-import EntretienLive from './pages/rh/EntretienLive';
-import AdminLayout       from './components/AdminLayout';
-import AdminDashboard    from './pages/admin/AdminDashboard';
-import AdminUtilisateurs from './pages/admin/AdminUtilisateurs';
+import RHCalendrierEntretiens from './pages/RH/RHCalendrierEntretiens';
+import EntretienLive from './pages/RH/EntretienLive';
+import AdminLayout from './components/AdminLayout';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import AdminUtilisateurs from './pages/Admin/AdminUtilisateurs';
 
 import RoleBasedRoute from './components/RoleBasedRoute';
 // Pages Candidat
@@ -27,7 +27,6 @@ import RHCandidats from './pages/RH/Rhcandidatures';
 import Rhsujet from './pages/RH/Rhsujet';
 import Rhquizsujet from './pages/RH/Rhquizgestion';
 import CandidatQuiz from './pages/Candidat/Candidatquiz';
-import CandidatCalendrier from './pages/Candidat/CandidatCalendrier';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
 
@@ -44,8 +43,8 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-        
-           <Route
+
+          <Route
             path="/"
             element={
               <PublicRoute>
@@ -70,18 +69,18 @@ function App() {
             }
           />
           <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-          <Route path="/reset-password"  element={<PublicRoute><ResetPassword /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-         <Route
-  path="/verify-otp"
-  element={
-    <VerifyOtpRoute>
-      <VerifyOtp />
-    </VerifyOtpRoute>
-  }
-/>
-             {/* Espace RH */}
-            <Route
+          <Route
+            path="/verify-otp"
+            element={
+              <VerifyOtpRoute>
+                <VerifyOtp />
+              </VerifyOtpRoute>
+            }
+          />
+          {/* Espace RH */}
+          <Route
             path="/rh"
             element={
               <RoleBasedRoute allowedRoles={['ROLE_RH']}>
@@ -93,20 +92,20 @@ function App() {
             <Route index element={<RHDashboard />} />
 
             {/* /rh/candidats */}
-            <Route path="sujets"  element={<Rhsujet />} />
-            <Route path="quiz"  element={<Rhquizsujet />} />
+            <Route path="sujets" element={<Rhsujet />} />
+            <Route path="quiz" element={<Rhquizsujet />} />
             {/* /rh/sujets */}
-            <Route path="candidats"     element={<RHCandidats />} />
+            <Route path="candidats" element={<RHCandidats />} />
 
             {/* /rh/entretiens */}
             <Route path="entretiens" element={<RHEntretiens />} />
-            <Route path="calendrier" element={<RHCalendrierEntretiens/>}/>
-             <Route path="entretien/:roomToken" element={<EntretienLive />} />
+            <Route path="calendrier" element={<RHCalendrierEntretiens />} />
+            <Route path="entretien/:roomToken" element={<EntretienLive />} />
             {/* /rh/parametres */}
             <Route path="parametres" element={<RHParametres />} />
           </Route>
           {/* Routes avec layout (Navbar + Footer) */}
-            <Route
+          <Route
             path="/candidat"
             element={
               <RoleBasedRoute allowedRoles={['ROLE_CANDIDAT']}>
@@ -117,20 +116,19 @@ function App() {
             {/* /candidat → Dashboard home */}
             <Route index element={<CandidatDashboard />} />
 
-           <Route path="candidatures" element={<MesCandidatures />} />
-<Route path="candidatures/:id" element={<DetailCandidature />}/>
+            <Route path="candidatures" element={<MesCandidatures />} />
+            <Route path="candidatures/:id" element={<DetailCandidature />} />
 
-      <Route path="quiz/:sujetId" element={<CandidatQuiz />} />
+            <Route path="quiz/:sujetId" element={<CandidatQuiz />} />
             {/* /candidat/offres → page Offres*/}
-            <Route path="offres" element={<CandidatOffres />} /> 
+            <Route path="offres" element={<CandidatOffres />} />
 
             {/* /candidat/profil → page Mon profil */}
             <Route path="profil" element={<CandidatProfil />} />
-             <Route path="entretiens" element={<CandidatCalendrier />} />
             {/* ✅ Salle d'entretien candidat dans le layout */}
             <Route path="entretien/:roomToken" element={<EntretienLive />} />
           </Route>
-  <Route
+          <Route
             path="/admin"
             element={
               <RoleBasedRoute allowedRoles={['ROLE_ADMIN']}>
@@ -140,8 +138,8 @@ function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="utilisateurs" element={<AdminUtilisateurs />} />
-              <Route path="candidats"  element={<RHCandidats />} />
-            <Route path="sujets"     element={<Rhsujet />} />
+            <Route path="candidats" element={<RHCandidats />} />
+            <Route path="sujets" element={<Rhsujet />} />
             <Route path="calendrier" element={<RHCalendrierEntretiens />} />
           </Route>
           {/* ── Routes publiques avec Navbar marketing + Footer ── */}
