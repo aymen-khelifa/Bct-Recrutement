@@ -16,36 +16,29 @@ except ImportError:
 import os
 import sys
 
-# ── Fix OpenCV Headless pour Azure Linux Containers ──────────────────────────────
-# DeepFace installe parfois opencv-python (GUI) qui casse cv2.cvtColor sur Azure Linux
-# car les libs graphiques (libGL, libX11) sont absentes.
-# Fix appliqué UNE FOIS par démarrage de processus (guard _CV2_FIXED en mémoire).
-# NOTE : le flag /tmp/ n'est PAS utilisé — il persistait trop longtemps et empêchait
-# le fix de s'appliquer après qu'Azure ait rechargé opencv-python via deepface.
-_CV2_FIXED = False
-if not _CV2_FIXED:
-    print("[OpenCV-Fix] Installation opencv-python-headless...")
-    os.system(f"{sys.executable} -m pip uninstall -y opencv-python opencv-contrib-python 2>/dev/null")
-    os.system(f"{sys.executable} -m pip install --quiet opencv-python-headless==4.10.0.84")
-    _CV2_FIXED = True
-    print("[OpenCV-Fix] OK — opencv-python-headless installé.")
+# ── Fix OpenCV Headless C++ Memory Issue ──────────────────────────────
+# Si deepface ou une autre lib importe un OpenCV GUI cassé, la librairie
+# C++ reste bloquée dans la RAM du processus actuel même si on fait `pip install`.
+# Solution : vérifier cvtColor, et si absent, réinstaller ET redémarrer (os.execv).
+def _fix_opencv_and_restart():
+    try:
+        import cv2
+        if hasattr(cv2, 'cvtColor'):
+            return  # Tout va bien
+    except ImportError:
+        pass
+    
+    print("[OpenCV-Fix] ⚠️ OpenCV cassé ou manquant. Suppression des versions GUI...")
+    os.system(f"{sys.executable} -m pip uninstall -y opencv-python opencv-contrib-python opencv-python-headless 2>/dev/null")
+    print("[OpenCV-Fix] Installation de opencv-python-headless...")
+    os.system(f"{sys.executable} -m pip install --quiet --no-cache-dir opencv-python-headless==4.10.0.84")
+    
+    print("[OpenCV-Fix] ✅ Terminé. Redémarrage du processus Python pour purger la mémoire...")
+    # Remplace le processus courant par un nouveau avec les mêmes arguments
+    os.execv(sys.executable, [sys.executable] + sys.argv)
 
-# Purger sys.modules pour forcer le rechargement du bon cv2 (headless).
-for _mod in list(sys.modules.keys()):
-    if _mod == "cv2" or _mod.startswith("cv2."):
-        del sys.modules[_mod]
+_fix_opencv_and_restart()
 import cv2
-
-# Vérification immédiate : cvtColor doit exister
-if not hasattr(cv2, 'cvtColor'):
-    print("[OpenCV-Fix] ⚠️ cv2.cvtColor manquant — forçage headless (urgence)...")
-    os.system(f"{sys.executable} -m pip uninstall -y opencv-python opencv-contrib-python 2>/dev/null")
-    os.system(f"{sys.executable} -m pip install --quiet opencv-python-headless==4.10.0.84")
-    for _mod in list(sys.modules.keys()):
-        if _mod == "cv2" or _mod.startswith("cv2."):
-            del sys.modules[_mod]
-    import cv2
-    print(f"[OpenCV-Fix] cv2 rechargé — cvtColor présent: {hasattr(cv2, 'cvtColor')}")
 
 import io
 import re
