@@ -50,12 +50,15 @@ jobs:
           unzip -t $JAR > /dev/null && echo "JAR is valid" || (echo "JAR is CORRUPTED" && exit 1)
           echo "JAR_PATH=$JAR" >> $GITHUB_ENV
 
-      - name: Rename JAR for deployment
-        run: cp $JAR_PATH backend/target/app.jar
+      - name: Package JAR as ZIP for deployment
+        run: |
+          cp $JAR_PATH backend/target/app.jar
+          cd backend/target
+          zip -j deployment.zip app.jar
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: 'backend/target/app.jar'
+          package: 'backend/target/deployment.zip'
