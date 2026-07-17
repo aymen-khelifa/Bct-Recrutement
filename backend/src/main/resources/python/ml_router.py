@@ -105,10 +105,14 @@ BASE_DIR   = Path(os.path.abspath(__file__)).parent
 CHROMA_DIR = str(BASE_DIR / "chroma_cv")
 
 # Sur Azure App Service Python (Oryx), l'app tourne depuis un dossier /tmp au lieu de /home/site/wwwroot.
-# Vérifier d'abord le stockage persistant Azure (Kudu), puis le dossier local.
-AZURE_PERSISTENT_MODELS = Path("/home/site/wwwroot/models/bert_bct")
-if AZURE_PERSISTENT_MODELS.exists():
-    MODEL_DIR = AZURE_PERSISTENT_MODELS
+# Vérifier d'abord le stockage persistant Azure (Kudu) où on a uploadé le ZIP.
+AZURE_PERSISTENT_MODELS_ROOT = Path("/home/site/wwwroot/bert_bct")
+AZURE_PERSISTENT_MODELS_SUB = Path("/home/site/wwwroot/models/bert_bct")
+
+if AZURE_PERSISTENT_MODELS_ROOT.exists():
+    MODEL_DIR = AZURE_PERSISTENT_MODELS_ROOT
+elif AZURE_PERSISTENT_MODELS_SUB.exists():
+    MODEL_DIR = AZURE_PERSISTENT_MODELS_SUB
 else:
     MODEL_DIR = BASE_DIR / "models" / "bert_bct"
 
