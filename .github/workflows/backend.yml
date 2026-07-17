@@ -52,7 +52,9 @@ jobs:
 
       - name: Package JAR as ZIP for deployment
         run: |
-          zip backend/target/deployment.zip $JAR_PATH
+          cp $JAR_PATH backend/target/app.jar
+          cd backend/target
+          zip -j deployment.zip app.jar
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
