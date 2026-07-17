@@ -506,7 +506,7 @@ const DetailCandidature = () => {
   const canStartQuiz = app?.statut === 'PRESELECTIONNE_CV' && !quizDone;
 
   // Score quiz visible : ACCEPTE_QUIZ, ELIMINE_QUIZ, ENTRETIEN_PLANIFIE, ACCEPTE, REFUSE
-  const STATUTS_WITH_QUIZ_SCORE = ['ACCEPTE_QUIZ','ELIMINE_QUIZ','ENTRETIEN_PLANIFIE','ACCEPTE','REFUSE'];
+  const STATUTS_WITH_QUIZ_SCORE = ['PRESELECTIONNE_CV','ACCEPTE_QUIZ','ELIMINE_QUIZ','ENTRETIEN_PLANIFIE','ACCEPTE','REFUSE'];
   const showQuizScore = quizDone && STATUTS_WITH_QUIZ_SCORE.includes(app?.statut);
 
   // Score entretien visible : ACCEPTE, REFUSE (si le champ existe)
