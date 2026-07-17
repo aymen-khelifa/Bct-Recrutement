@@ -14,9 +14,25 @@ except ImportError:
 
 
 import os
+import sys
+
+# ── Auto-Repair OpenCV pour Azure Linux Containers ─────────────────────────────
+# Deepface installe silencieusement `opencv-python` qui nécessite des libs GUI X11.
+# Sur un serveur headless, cela crashe. On le remplace à chaud si l'import échoue.
+try:
+    import cv2
+except ImportError as e:
+    if "libxcb" in str(e) or "libSM" in str(e) or "libGL" in str(e) or "opencv" in str(e).lower():
+        print(f"[Auto-Repair] Dépendance OpenCV GUI manquante ({e}). Remplacement par headless...")
+        os.system(f"{sys.executable} -m pip uninstall -y opencv-python opencv-contrib-python")
+        os.system(f"{sys.executable} -m pip install opencv-python-headless==4.10.0.84")
+        import cv2
+        print("[Auto-Repair] OpenCV headless installé et chargé avec succès.")
+    else:
+        raise
+
 import io
 import re
-import cv2
 import math
 import json
 import time
