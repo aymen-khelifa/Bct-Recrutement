@@ -55,6 +55,15 @@ if not SCHEDULER_GROQ_KEY:
 # ── Imports restants ───────────────────────────────────────────────────────────
 import numpy as np
 import fitz  # PyMuPDF — utilisé pour toute extraction de texte PDF (RAG + CV Scorer)
+
+# ── Fix SQLite pour Azure App Service Linux (sqlite3 trop ancien pour ChromaDB) ──
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass  # pysqlite3 non disponible, on tente avec sqlite3 système
+
 import chromadb
 from chromadb.config import Settings
 from PIL        import Image
