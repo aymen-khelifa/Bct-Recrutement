@@ -19,7 +19,7 @@ public class QuizGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(QuizGenerationService.class);
 
-    @Value("${quiz.generator.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
+    @Value("${bct.ml.service.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
     private String generatorUrl;
 
     @Autowired private QuizRepository                 quizRepository;

@@ -51,7 +51,7 @@ public class ScoringService {
 
     private static final Logger log = LoggerFactory.getLogger(ScoringService.class);
 
-    @Value("${flask.cv.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
+    @Value("${bct.ml.service.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
     private String scorerUrl;
 
     @Autowired private CandidatureRepository    candidatureRepository;

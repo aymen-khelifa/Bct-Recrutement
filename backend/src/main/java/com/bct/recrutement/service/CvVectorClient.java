@@ -22,7 +22,7 @@ public class CvVectorClient {
     @Autowired private CloudinaryService        cloudinaryService;
 
     // URL du microservice Flask
-    @Value("${flask.cv.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
+    @Value("${bct.ml.service.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
     private String flaskUrl;
 
     // ── Indexer le CONTENU d'un CV (async, à la postulation) ──────────────────

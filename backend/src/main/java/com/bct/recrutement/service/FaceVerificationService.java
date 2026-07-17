@@ -37,7 +37,7 @@ public class FaceVerificationService {
     private static final int  MAX_ATTEMPTS    = 5;
     private static final long BLOCK_WINDOW_MIN = 30L;
 
-    @Value("${flask.face.service.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
+    @Value("${bct.ml.service.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
     private String flaskUrl;
 
     @Autowired private RestTemplate                  restTemplate;
