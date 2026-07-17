@@ -128,7 +128,8 @@ public class QuizGenerationService {
 
         ResponseEntity<Map> resp;
         try {
-            resp = restTemplate.postForEntity(generatorUrl + "/generate", req, Map.class);
+            String fixedUrl = generatorUrl.startsWith("http") ? generatorUrl : "https://" + generatorUrl;
+            resp = restTemplate.postForEntity(fixedUrl + "/generate", req, Map.class);
         } catch (Exception e) {
             throw new RuntimeException(
                     "Service Python inaccessible sur " + generatorUrl + " : " + e.getMessage() +
