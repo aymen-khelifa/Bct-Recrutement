@@ -16,6 +16,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import jakarta.annotation.PostConstruct;
 import java.nio.file.*;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
@@ -53,6 +54,16 @@ public class ScoringService {
 
     @Value("${bct.ml.service.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
     private String scorerUrl;
+
+    @PostConstruct
+    private void validateScorerUrl() {
+        if (scorerUrl == null || scorerUrl.isBlank() || !scorerUrl.startsWith("http")) {
+            throw new IllegalStateException(
+                "[ScoringService] bct.ml.service.url est invalide ou absent : '" + scorerUrl + "'. "
+                + "Vérifiez la variable d'environnement BCT_ML_SERVICE_URL.");
+        }
+        log.info("[ScoringService] ML URL configurée : {}", scorerUrl);
+    }
 
     @Autowired private CandidatureRepository    candidatureRepository;
     @Autowired private Profilcandidatrepository profilCandidatRepository;

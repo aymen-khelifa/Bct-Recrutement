@@ -1,6 +1,7 @@
 package com.bct.recrutement.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,16 @@ public class CvVectorClient {
     // URL du microservice Flask
     @Value("${bct.ml.service.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
     private String flaskUrl;
+
+    @PostConstruct
+    private void validateFlaskUrl() {
+        if (flaskUrl == null || flaskUrl.isBlank() || !flaskUrl.startsWith("http")) {
+            throw new IllegalStateException(
+                "[CvVectorClient] bct.ml.service.url est invalide ou absent : '" + flaskUrl + "'. "
+                + "Vérifiez la variable d'environnement BCT_ML_SERVICE_URL.");
+        }
+        log.info("[CvVectorClient] Flask URL configurée : {}", flaskUrl);
+    }
 
     // ── Indexer le CONTENU d'un CV (async, à la postulation) ──────────────────
 
