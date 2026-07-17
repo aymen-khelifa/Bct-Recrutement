@@ -87,7 +87,15 @@ args, _ = parser.parse_known_args()
 PORT       = args.port
 BASE_DIR   = Path(os.path.abspath(__file__)).parent
 CHROMA_DIR = str(BASE_DIR / "chroma_cv")
-MODEL_DIR  = BASE_DIR / "models" / "bert_bct"
+
+# Sur Azure App Service Python (Oryx), l'app tourne depuis un dossier /tmp au lieu de /home/site/wwwroot.
+# Vérifier d'abord le stockage persistant Azure (Kudu), puis le dossier local.
+AZURE_PERSISTENT_MODELS = Path("/home/site/wwwroot/models/bert_bct")
+if AZURE_PERSISTENT_MODELS.exists():
+    MODEL_DIR = AZURE_PERSISTENT_MODELS
+else:
+    MODEL_DIR = BASE_DIR / "models" / "bert_bct"
+
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
