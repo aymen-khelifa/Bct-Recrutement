@@ -21,6 +21,7 @@ import unicodedata
 from pathlib import Path
 from typing  import List
 from io      import BytesIO
+# ── .env chargé EN PREMIER, avant tout le reste ───────────────────────────────
 
 # ── .env chargé EN PREMIER, avant tout le reste ───────────────────────────────
 from dotenv import load_dotenv
