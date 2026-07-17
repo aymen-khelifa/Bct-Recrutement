@@ -57,10 +57,14 @@ public class ScoringService {
 
     @PostConstruct
     private void validateScorerUrl() {
-        if (scorerUrl == null || scorerUrl.isBlank() || !scorerUrl.startsWith("http")) {
+        if (scorerUrl == null || scorerUrl.isBlank()) {
             throw new IllegalStateException(
-                "[ScoringService] bct.ml.service.url est invalide ou absent : '" + scorerUrl + "'. "
-                + "Vérifiez la variable d'environnement BCT_ML_SERVICE_URL.");
+                "[ScoringService] BCT_ML_SERVICE_URL est absent ou vide.");
+        }
+        // Auto-corriger si le schéma https:// est absent (variable Azure mal configurée)
+        if (!scorerUrl.startsWith("http://") && !scorerUrl.startsWith("https://")) {
+            scorerUrl = "https://" + scorerUrl;
+            log.warn("[ScoringService] Schéma manquant — URL corrigée en : {}", scorerUrl);
         }
         log.info("[ScoringService] ML URL configurée : {}", scorerUrl);
     }

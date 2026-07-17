@@ -28,10 +28,14 @@ public class CvVectorClient {
 
     @PostConstruct
     private void validateFlaskUrl() {
-        if (flaskUrl == null || flaskUrl.isBlank() || !flaskUrl.startsWith("http")) {
+        if (flaskUrl == null || flaskUrl.isBlank()) {
             throw new IllegalStateException(
-                "[CvVectorClient] bct.ml.service.url est invalide ou absent : '" + flaskUrl + "'. "
-                + "Vérifiez la variable d'environnement BCT_ML_SERVICE_URL.");
+                "[CvVectorClient] BCT_ML_SERVICE_URL est absent ou vide.");
+        }
+        // Auto-corriger si le schéma https:// est absent (variable Azure mal configurée)
+        if (!flaskUrl.startsWith("http://") && !flaskUrl.startsWith("https://")) {
+            flaskUrl = "https://" + flaskUrl;
+            log.warn("[CvVectorClient] Schéma manquant — URL corrigée en : {}", flaskUrl);
         }
         log.info("[CvVectorClient] Flask URL configurée : {}", flaskUrl);
     }
