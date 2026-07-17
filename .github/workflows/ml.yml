@@ -35,6 +35,8 @@ jobs:
           mkdir -p /home/site/wwwroot/models
           mkdir -p /home/site/wwwroot/chroma_cv
           pip install -r /home/site/wwwroot/requirements.txt
+          pip uninstall -y opencv-python opencv-contrib-python
+          pip install opencv-python-headless==4.10.0.84
           gunicorn --bind=0.0.0.0:8000 --timeout 600 --workers 1 ml_router:app
           EOF
           chmod +x startup.sh

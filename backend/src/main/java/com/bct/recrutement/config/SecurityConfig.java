@@ -71,6 +71,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/", "/health").permitAll()
                                 .requestMatchers("/api/notifications/**").hasRole("CANDIDAT")
 // ou si tu utilises ROLE_ prefix :
                                 .requestMatchers("/api/notifications/**").hasAuthority("ROLE_CANDIDAT")
