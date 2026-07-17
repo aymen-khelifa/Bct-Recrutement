@@ -39,7 +39,7 @@ public class InterviewSchedulerService {
     private static final int JOURS_A_PLANIFIER = 5;
 
 
-    @Value("${ml.router.url:http://localhost:5000}")
+    @Value("${ml.router.url:https://recrutement-ml-bbgrckete3cbg0an.francecentral-01.azurewebsites.net}")
     private String mlRouterUrl;
 
     @Value("${app.base-url:http://localhost:3000}")
