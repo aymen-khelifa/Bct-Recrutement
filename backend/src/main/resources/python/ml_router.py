@@ -4,6 +4,15 @@
 #  Un seul processus, un seul port (par défaut 5000)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# ── Fix SQLite pour Azure App Service Linux (sqlite3 trop ancien pour ChromaDB) ──
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass  # pysqlite3 non disponible, on tente avec sqlite3 système
+
+
 import os
 import io
 import re
