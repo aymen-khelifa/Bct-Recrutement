@@ -118,6 +118,8 @@ CHROMA_DIR = str(BASE_DIR / "chroma_cv")
 # On liste tout /home/site/models pour trouver config.json (marqueur du modèle).
 
 _SEARCH_ROOTS = [
+    Path("/custom_models"),
+    Path("/mounts/modelsbct"),
     Path("/home/site/models"),
     Path("/home/site/wwwroot"),
     BASE_DIR / "models",

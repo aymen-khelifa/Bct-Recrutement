@@ -288,28 +288,28 @@ const styles = `
 const getStepperState = (statut) => {
   switch (statut) {
     // Étape 0=candidature, 1=analyseIA, 2=quiz, 3=entretien, 4=décision
-    case 'EN_COURS_EXAMEN':    return ['done', 'active',   'pending',   'pending', 'pending'];
-    case 'PRESELECTIONNE_CV':  return ['done', 'done',     'purple',    'pending', 'pending']; // quiz disponible
-    case 'ELIMINE_CV':         return ['done', 'done-red', 'pending',   'pending', 'pending'];
-    case 'ACCEPTE_QUIZ':       return ['done', 'done',     'done',      'pending', 'pending']; // quiz passé, attente entretien
-    case 'ELIMINE_QUIZ':       return ['done', 'done',     'done-red',  'pending', 'pending']; // quiz échoué
-    case 'ENTRETIEN_PLANIFIE': return ['done', 'done',     'done',      'amber',   'pending']; // entretien planifié
-    case 'ACCEPTE':            return ['done', 'done',     'done',      'done',    'done'];
-    case 'REFUSE':             return ['done', 'done',     'done',      'done',    'done-red'];
-    default:                   return ['done', 'active',   'pending',   'pending', 'pending'];
+    case 'EN_COURS_EXAMEN': return ['done', 'active', 'pending', 'pending', 'pending'];
+    case 'PRESELECTIONNE_CV': return ['done', 'done', 'purple', 'pending', 'pending']; // quiz disponible
+    case 'ELIMINE_CV': return ['done', 'done-red', 'pending', 'pending', 'pending'];
+    case 'ACCEPTE_QUIZ': return ['done', 'done', 'done', 'pending', 'pending']; // quiz passé, attente entretien
+    case 'ELIMINE_QUIZ': return ['done', 'done', 'done-red', 'pending', 'pending']; // quiz échoué
+    case 'ENTRETIEN_PLANIFIE': return ['done', 'done', 'done', 'amber', 'pending']; // entretien planifié
+    case 'ACCEPTE': return ['done', 'done', 'done', 'done', 'done'];
+    case 'REFUSE': return ['done', 'done', 'done', 'done', 'done-red'];
+    default: return ['done', 'active', 'pending', 'pending', 'pending'];
   }
 };
 
 const getProgressWidth = (statut) => {
   const map = {
-    EN_COURS_EXAMEN:    '25%',
-    PRESELECTIONNE_CV:  '45%',
-    ELIMINE_CV:         '40%',
-    ACCEPTE_QUIZ:       '62%',
-    ELIMINE_QUIZ:       '62%',
+    EN_COURS_EXAMEN: '25%',
+    PRESELECTIONNE_CV: '45%',
+    ELIMINE_CV: '40%',
+    ACCEPTE_QUIZ: '62%',
+    ELIMINE_QUIZ: '62%',
     ENTRETIEN_PLANIFIE: '75%',
-    ACCEPTE:            '100%',
-    REFUSE:             '100%',
+    ACCEPTE: '100%',
+    REFUSE: '100%',
   };
   return map[statut] || '10%';
 };
@@ -320,28 +320,38 @@ const getProgressColor = (statut) => {
 };
 
 const STEPS = [
-  { icon:'check_circle',   label:'Candidature\nenvoyée',
-    sub:{ done:'✓ Complété', active:'En cours', pending:'À venir' } },
-  { icon:'analytics',      label:'Analyse IA',
-    sub:{ done:'✓ Complété', active:'Étape actuelle', pending:'À venir', 'done-red':'✗ Refusé' } },
-  { icon:'quiz',           label:'Quiz\ntechnique',
-    sub:{ done:'✓ Complété', active:'À passer', pending:'À venir', purple:'Étape actuelle', 'done-red':'✗ Éliminé' } },
-  { icon:'calendar_today', label:'Entretien\nprévu',
-    sub:{ done:'✓ Complété', active:'Planifié', pending:'À venir', amber:'Étape actuelle' } },
-  { icon:'verified',       label:'Décision\nfinale',
-    sub:{ done:'✓ Accepté', active:'Résultat', pending:'À venir', 'done-red':'✗ Refusé' } },
+  {
+    icon: 'check_circle', label: 'Candidature\nenvoyée',
+    sub: { done: '✓ Complété', active: 'En cours', pending: 'À venir' }
+  },
+  {
+    icon: 'analytics', label: 'Analyse IA',
+    sub: { done: '✓ Complété', active: 'Étape actuelle', pending: 'À venir', 'done-red': '✗ Refusé' }
+  },
+  {
+    icon: 'quiz', label: 'Quiz\ntechnique',
+    sub: { done: '✓ Complété', active: 'À passer', pending: 'À venir', purple: 'Étape actuelle', 'done-red': '✗ Éliminé' }
+  },
+  {
+    icon: 'calendar_today', label: 'Entretien\nprévu',
+    sub: { done: '✓ Complété', active: 'Planifié', pending: 'À venir', amber: 'Étape actuelle' }
+  },
+  {
+    icon: 'verified', label: 'Décision\nfinale',
+    sub: { done: '✓ Accepté', active: 'Résultat', pending: 'À venir', 'done-red': '✗ Refusé' }
+  },
 ];
 
 const getStepLabelCls = (st) => {
   if (st === 'active' || st === 'amber') return 'active';
-  if (st === 'purple')   return 'quiz';
+  if (st === 'purple') return 'quiz';
   if (st === 'done-red') return 'refused';
-  if (st === 'pending')  return 'pending';
+  if (st === 'pending') return 'pending';
   return '';
 };
 const getStepSubCls = (st) => {
   if (st === 'active' || st === 'amber') return 'active-sub';
-  if (st === 'purple')   return 'quiz-sub';
+  if (st === 'purple') return 'quiz-sub';
   if (st === 'done-red') return 'refused-sub';
   return '';
 };
@@ -349,43 +359,59 @@ const getStepSubCls = (st) => {
 const getBannerInfo = (statut) => {
   switch (statut) {
     case 'EN_COURS_EXAMEN':
-      return { color:'blue', icon:'hourglass_empty', tag:'EN COURS', title:'Analyse IA en cours',
-               text:"Notre système d'intelligence artificielle analyse actuellement votre dossier. Vous serez notifié dès que les résultats seront disponibles." };
+      return {
+        color: 'blue', icon: 'hourglass_empty', tag: 'EN COURS', title: 'Analyse IA en cours',
+        text: "Notre système d'intelligence artificielle analyse actuellement votre dossier. Vous serez notifié dès que les résultats seront disponibles."
+      };
     case 'PRESELECTIONNE_CV':
-      return { color:'green', icon:'check_circle', tag:'PRÉSELECTIONNÉ', title:'CV présélectionné — Quiz disponible',
-               text:"Bonne nouvelle ! Votre CV a été présélectionné. Passez maintenant le quiz technique pour continuer le processus." };
+      return {
+        color: 'green', icon: 'check_circle', tag: 'PRÉSELECTIONNÉ', title: 'CV présélectionné — Quiz disponible',
+        text: "Bonne nouvelle ! Votre CV a été présélectionné. Passez maintenant le quiz technique pour continuer le processus."
+      };
     case 'ELIMINE_CV':
-      return { color:'red', icon:'cancel', tag:'ÉLIMINÉ CV', title:'Candidature non retenue — CV',
-               text:"Après analyse de votre CV, votre candidature n'a pas été retenue pour ce poste." };
+      return {
+        color: 'red', icon: 'cancel', tag: 'ÉLIMINÉ CV', title: 'Candidature non retenue — CV',
+        text: "Après analyse de votre CV, votre candidature n'a pas été retenue pour ce poste."
+      };
     case 'ACCEPTE_QUIZ':
-      return { color:'green', icon:'check_circle', tag:'QUIZ VALIDÉ', title:'Quiz réussi — Entretien à venir',
-               text:"Félicitations ! Vous avez réussi le quiz technique. Notre équipe planifiera prochainement votre entretien RH." };
+      return {
+        color: 'green', icon: 'check_circle', tag: 'QUIZ VALIDÉ', title: 'Quiz réussi — Entretien à venir',
+        text: "Félicitations ! Vous avez réussi le quiz technique. Notre équipe planifiera prochainement votre entretien RH."
+      };
     case 'ELIMINE_QUIZ':
-      return { color:'red', icon:'cancel', tag:'ÉLIMINÉ QUIZ', title:'Score insuffisant au quiz',
-               text:"Votre score au quiz technique n'a pas atteint le seuil requis pour continuer le processus de recrutement." };
+      return {
+        color: 'red', icon: 'cancel', tag: 'ÉLIMINÉ QUIZ', title: 'Score insuffisant au quiz',
+        text: "Votre score au quiz technique n'a pas atteint le seuil requis pour continuer le processus de recrutement."
+      };
     case 'ENTRETIEN_PLANIFIE':
-      return { color:'amber', icon:'event', tag:'ENTRETIEN PLANIFIÉ', title:'Entretien planifié',
-               text:"Un entretien a été planifié avec notre équipe de recrutement. Vérifiez la date et préparez vos questions." };
+      return {
+        color: 'amber', icon: 'event', tag: 'ENTRETIEN PLANIFIÉ', title: 'Entretien planifié',
+        text: "Un entretien a été planifié avec notre équipe de recrutement. Vérifiez la date et préparez vos questions."
+      };
     case 'ACCEPTE':
-      return { color:'green', icon:'task_alt', tag:'ACCEPTÉ', title:'Candidature acceptée !',
-               text:"Félicitations ! Notre équipe RH vous contactera prochainement pour les modalités d'intégration." };
+      return {
+        color: 'green', icon: 'task_alt', tag: 'ACCEPTÉ', title: 'Candidature acceptée !',
+        text: "Félicitations ! Notre équipe RH vous contactera prochainement pour les modalités d'intégration."
+      };
     case 'REFUSE': return null;
     default:
-      return { color:'blue', icon:'schedule', tag:'EN ATTENTE', title:'Candidature en attente',
-               text:"Votre candidature est en cours d'examen par notre équipe." };
+      return {
+        color: 'blue', icon: 'schedule', tag: 'EN ATTENTE', title: 'Candidature en attente',
+        text: "Votre candidature est en cours d'examen par notre équipe."
+      };
   }
 };
 
 // Description courte du statut pour la timeline
 const getStatusDesc = (statut) => {
   switch (statut) {
-    case 'EN_COURS_EXAMEN':    return "Votre dossier est en cours d'analyse par notre IA.";
-    case 'PRESELECTIONNE_CV':  return "Votre CV a été présélectionné. Le quiz technique est disponible.";
-    case 'ELIMINE_CV':         return "Votre dossier n'a pas été retenu après analyse du CV.";
-    case 'ACCEPTE_QUIZ':       return "Votre quiz a été validé. L'entretien sera planifié prochainement.";
-    case 'ELIMINE_QUIZ':       return "Votre score au quiz n'a pas atteint le seuil requis.";
+    case 'EN_COURS_EXAMEN': return "Votre dossier est en cours d'analyse par notre IA.";
+    case 'PRESELECTIONNE_CV': return "Votre CV a été présélectionné. Le quiz technique est disponible.";
+    case 'ELIMINE_CV': return "Votre dossier n'a pas été retenu après analyse du CV.";
+    case 'ACCEPTE_QUIZ': return "Votre quiz a été validé. L'entretien sera planifié prochainement.";
+    case 'ELIMINE_QUIZ': return "Votre score au quiz n'a pas atteint le seuil requis.";
     case 'ENTRETIEN_PLANIFIE': return "Un entretien a été planifié avec l'équipe RH.";
-    default:                   return "Votre dossier est en cours d'évaluation.";
+    default: return "Votre dossier est en cours d'évaluation.";
   }
 };
 
@@ -444,26 +470,26 @@ const DetailCandidature = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [user,    setUser]    = useState(null);
-  const [app,     setApp]     = useState(null);
-  const [cv,      setCv]      = useState(null);
+  const [user, setUser] = useState(null);
+  const [app, setApp] = useState(null);
+  const [cv, setCv] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [popup,        setPopup]        = useState(null);
-  const [popupBlob,    setPopupBlob]    = useState(null);
+  const [popup, setPopup] = useState(null);
+  const [popupBlob, setPopupBlob] = useState(null);
   const [popupLoading, setPopupLoading] = useState(false);
-  const [lmPopup,      setLmPopup]      = useState(false);
-  const [quizPopup,    setQuizPopup]    = useState(false);
-  const [showFace,     setShowFace]     = useState(false);
+  const [lmPopup, setLmPopup] = useState(false);
+  const [quizPopup, setQuizPopup] = useState(false);
+  const [showFace, setShowFace] = useState(false);
   const [, setFaceVerified] = useState(false);
 
-  useEffect(() => { axios.get('/api/auth/whoami').then(r => setUser(r.data)).catch(() => {}); }, []);
+  useEffect(() => { axios.get('/api/auth/whoami').then(r => setUser(r.data)).catch(() => { }); }, []);
   useEffect(() => {
     if (id) {
-      axios.get(`/api/candidatures/${id}/details`).then(r => setApp(r.data)).catch(() => {}).finally(() => setLoading(false));
+      axios.get(`/api/candidatures/${id}/details`).then(r => setApp(r.data)).catch(() => { }).finally(() => setLoading(false));
     } else setLoading(false);
   }, [id]);
-  useEffect(() => { axios.get('/api/profil/me').then(r => setCv(r.data)).catch(() => {}); }, []);
+  useEffect(() => { axios.get('/api/profil/me').then(r => setCv(r.data)).catch(() => { }); }, []);
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') { closePopup(); setQuizPopup(false); } };
     window.addEventListener('keydown', onKey);
@@ -489,42 +515,42 @@ const DetailCandidature = () => {
     navigate(`/candidat/quiz/${app.sujetId}`, { state: { candidatureId: Number(id) } });
   };
 
-  const userName      = user?.name || '—';
-  const stepStates    = app ? getStepperState(app.statut) : [];
-  const progressW     = app ? getProgressWidth(app.statut) : '10%';
+  const userName = user?.name || '—';
+  const stepStates = app ? getStepperState(app.statut) : [];
+  const progressW = app ? getProgressWidth(app.statut) : '10%';
   const progressColor = app ? getProgressColor(app.statut) : '#003d7a';
-  const bannerInfo    = app ? getBannerInfo(app.statut) : null;
+  const bannerInfo = app ? getBannerInfo(app.statut) : null;
 
   const cvPath = cv?.cv || null;
   const cvName = cvPath ? (() => { try { return new URL(cvPath).pathname.split('/').pop(); } catch { return cvPath.split('/').pop(); } })() : null;
-  const cvUrl  = cvPath ? '/api/files/cv/me' : null;
+  const cvUrl = cvPath ? '/api/files/cv/me' : null;
   const lmText = app?.lettreMotivation || null;
 
   // ── Logique d'affichage par statut ────────────────────────────────
   // Quiz démarrable : seulement si PRESELECTIONNE_CV et pas encore de score
-  const quizDone     = app?.scoreQuiz != null;
+  const quizDone = app?.scoreQuiz != null;
   const canStartQuiz = app?.statut === 'PRESELECTIONNE_CV' && !quizDone;
 
   // Score quiz visible : ACCEPTE_QUIZ, ELIMINE_QUIZ, ENTRETIEN_PLANIFIE, ACCEPTE, REFUSE
-  const STATUTS_WITH_QUIZ_SCORE = ['PRESELECTIONNE_CV','ACCEPTE_QUIZ','ELIMINE_QUIZ','ENTRETIEN_PLANIFIE','ACCEPTE','REFUSE'];
+  const STATUTS_WITH_QUIZ_SCORE = ['PRESELECTIONNE_CV', 'ACCEPTE_QUIZ', 'ELIMINE_QUIZ', 'ENTRETIEN_PLANIFIE', 'ACCEPTE', 'REFUSE'];
   const showQuizScore = quizDone && STATUTS_WITH_QUIZ_SCORE.includes(app?.statut);
 
   // Score entretien visible : ACCEPTE, REFUSE (si le champ existe)
-  const showEntretienScore = app?.scoreEntretien != null && ['ACCEPTE','REFUSE'].includes(app?.statut);
+  const showEntretienScore = app?.scoreEntretien != null && ['ACCEPTE', 'REFUSE'].includes(app?.statut);
 
   // Couleurs du score quiz selon statut
   const quizScoreColor = app?.statut === 'ELIMINE_QUIZ' ? '#f87171' : '#6ee7b7';
-  const quizScoreBg    = app?.statut === 'ELIMINE_QUIZ'
+  const quizScoreBg = app?.statut === 'ELIMINE_QUIZ'
     ? 'linear-gradient(135deg,#1e0505,#3b0f0f)'
     : 'linear-gradient(135deg,#022c1a,#064e2e)';
   const quizScoreBorder = app?.statut === 'ELIMINE_QUIZ'
     ? '1px solid rgba(220,38,38,0.3)'
     : '1px solid rgba(5,150,105,0.3)';
   const quizScoreTagStyle = app?.statut === 'ELIMINE_QUIZ'
-    ? { background:'rgba(220,38,38,0.2)', color:'#fca5a5', border:'1px solid rgba(220,38,38,0.35)' }
+    ? { background: 'rgba(220,38,38,0.2)', color: '#fca5a5', border: '1px solid rgba(220,38,38,0.35)' }
     : {};
-  const quizScoreTagLabel  = app?.statut === 'ELIMINE_QUIZ' ? 'QUIZ ÉCHOUÉ' : 'QUIZ PASSÉ';
-  const quizScoreTagIcon   = app?.statut === 'ELIMINE_QUIZ' ? 'cancel' : 'verified';
+  const quizScoreTagLabel = app?.statut === 'ELIMINE_QUIZ' ? 'QUIZ ÉCHOUÉ' : 'QUIZ PASSÉ';
+  const quizScoreTagIcon = app?.statut === 'ELIMINE_QUIZ' ? 'cancel' : 'verified';
   const quizScoreIconColor = quizScoreColor;
 
   return (
@@ -534,7 +560,7 @@ const DetailCandidature = () => {
 
         {/* POPUP CONFIRMATION QUIZ */}
         {quizPopup && (
-          <QuizConfirmPopup sujetTitre={app?.sujetTitre} onConfirm={handleStartQuiz} onCancel={() => setQuizPopup(false)}/>
+          <QuizConfirmPopup sujetTitre={app?.sujetTitre} onConfirm={handleStartQuiz} onCancel={() => setQuizPopup(false)} />
         )}
 
         {/* POPUP DOCUMENT */}
@@ -553,16 +579,16 @@ const DetailCandidature = () => {
                   popupLoading ? (
                     <div className="dc-popup-loading"><span className="material-symbols-outlined">progress_activity</span>Chargement...</div>
                   ) : popupBlob ? (
-                    <iframe src={popupBlob} title={popup.name}/>
+                    <iframe src={popupBlob} title={popup.name} />
                   ) : (
-                    <div className="dc-popup-no-preview"><span className="material-symbols-outlined">error_outline</span><p style={{fontSize:'0.875rem',color:'#64748b'}}>Impossible de charger le document.</p></div>
+                    <div className="dc-popup-no-preview"><span className="material-symbols-outlined">error_outline</span><p style={{ fontSize: '0.875rem', color: '#64748b' }}>Impossible de charger le document.</p></div>
                   )
                 ) : (
-                  <div className="dc-popup-no-preview"><span className="material-symbols-outlined">description</span><p style={{fontSize:'0.875rem',color:'#64748b'}}>Aperçu non disponible pour les fichiers Word.</p></div>
+                  <div className="dc-popup-no-preview"><span className="material-symbols-outlined">description</span><p style={{ fontSize: '0.875rem', color: '#64748b' }}>Aperçu non disponible pour les fichiers Word.</p></div>
                 )}
               </div>
               <div className="dc-popup-footer">
-                <a href={popupBlob||popup.url} download={popup.name} className="dc-popup-dl-btn">
+                <a href={popupBlob || popup.url} download={popup.name} className="dc-popup-dl-btn">
                   <span className="material-symbols-outlined">download</span>Télécharger
                 </a>
               </div>
@@ -603,7 +629,7 @@ const DetailCandidature = () => {
                   <p className="dc-lm-lettre-hint">Lecture seule — soumise lors de la candidature.</p>
                   {lmText ? (
                     <>
-                      <textarea className="dc-lm-textarea" value={lmText} readOnly spellCheck={false}/>
+                      <textarea className="dc-lm-textarea" value={lmText} readOnly spellCheck={false} />
                       <div className="dc-lm-lettre-meta"><span className="dc-lm-char-count">{lmText.length} caractères ✓</span></div>
                     </>
                   ) : (
@@ -627,7 +653,7 @@ const DetailCandidature = () => {
           {loading ? (
             <div className="dc-loading"><span className="material-symbols-outlined dc-spin">progress_activity</span><p>Chargement...</p></div>
           ) : !app ? (
-            <div className="dc-loading"><span className="material-symbols-outlined" style={{fontSize:'3rem',color:'#cbd5e1'}}>error_outline</span><p style={{color:'#94a3b8'}}>Candidature introuvable.</p></div>
+            <div className="dc-loading"><span className="material-symbols-outlined" style={{ fontSize: '3rem', color: '#cbd5e1' }}>error_outline</span><p style={{ color: '#94a3b8' }}>Candidature introuvable.</p></div>
           ) : (
             <>
               {/* WELCOME */}
@@ -640,8 +666,8 @@ const DetailCandidature = () => {
               <div className="dc-stepper-card">
                 <p className="dc-stepper-title">Votre Parcours de Recrutement</p>
                 <div className="dc-stepper">
-                  <div className="dc-stepper-line"/>
-                  <div className="dc-stepper-progress" style={{width:progressW, background:progressColor}}/>
+                  <div className="dc-stepper-line" />
+                  <div className="dc-stepper-progress" style={{ width: progressW, background: progressColor }} />
                   {STEPS.map((s, i) => {
                     const st = stepStates[i] || 'pending';
                     const subText = s.sub[st] || s.sub.pending;
@@ -689,7 +715,7 @@ const DetailCandidature = () => {
               <div className="dc-grid">
 
                 {/* ── Colonne gauche ─────────────────────────────────────── */}
-                <div style={{display:'flex',flexDirection:'column',gap:'1.5rem'}}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
                   {/* Bannière statut */}
                   {bannerInfo && (
@@ -717,14 +743,14 @@ const DetailCandidature = () => {
                         <div className="dc-tl-item">
                           <span className="dc-tl-date">Récemment</span>
                           <div className="dc-tl-content">
-                            <p>Décision finale : <strong style={{color: app.statut==='ACCEPTE'?'#059669':'#dc2626'}}>{app.statut==='ACCEPTE'?'ACCEPTÉ(E)':'REFUSÉ(E)'}</strong></p>
-                            <p>{app.statut==='ACCEPTE'?'Votre candidature a été définitivement acceptée.':'Votre candidature n\'a pas été retenue.'}</p>
+                            <p>Décision finale : <strong style={{ color: app.statut === 'ACCEPTE' ? '#059669' : '#dc2626' }}>{app.statut === 'ACCEPTE' ? 'ACCEPTÉ(E)' : 'REFUSÉ(E)'}</strong></p>
+                            <p>{app.statut === 'ACCEPTE' ? 'Votre candidature a été définitivement acceptée.' : 'Votre candidature n\'a pas été retenue.'}</p>
                           </div>
                         </div>
                       )}
 
                       {/* Entretien — si planifié ou passé */}
-                      {app.dateEntretien && ['ENTRETIEN_PLANIFIE','ACCEPTE','REFUSE'].includes(app.statut) && (
+                      {app.dateEntretien && ['ENTRETIEN_PLANIFIE', 'ACCEPTE', 'REFUSE'].includes(app.statut) && (
                         <div className="dc-tl-item">
                           <span className="dc-tl-date">
                             {(() => { try { return new Date(app.dateEntretien).toLocaleDateString('fr-FR'); } catch { return app.dateEntretien; } })()}
@@ -746,18 +772,18 @@ const DetailCandidature = () => {
                             {app.quizPasseLe ? (() => { try { return new Date(app.quizPasseLe).toLocaleDateString('fr-FR'); } catch { return app.quizPasseLe; } })() : 'Récemment'}
                           </span>
                           <div className="dc-tl-content">
-                            <p>Quiz technique soumis — Score : <strong style={{color: app.statut==='ELIMINE_QUIZ'?'#dc2626':'#059669'}}>{app.scoreQuiz}/50</strong></p>
+                            <p>Quiz technique soumis — Score : <strong style={{ color: app.statut === 'ELIMINE_QUIZ' ? '#dc2626' : '#059669' }}>{app.scoreQuiz}/50</strong></p>
                             <p>Vos réponses ont été enregistrées et transmises à l'équipe RH.</p>
                           </div>
                         </div>
                       )}
 
                       {/* Statut courant — si pas encore décision finale */}
-                      {!['ACCEPTE','REFUSE'].includes(app.statut) && (
+                      {!['ACCEPTE', 'REFUSE'].includes(app.statut) && (
                         <div className="dc-tl-item">
                           <span className="dc-tl-date">Aujourd'hui</span>
                           <div className="dc-tl-content">
-                            <p>Statut : <strong style={{color: ['ELIMINE_CV','ELIMINE_QUIZ'].includes(app.statut)?'#dc2626':'#2563eb'}}>{app.statut}</strong></p>
+                            <p>Statut : <strong style={{ color: ['ELIMINE_CV', 'ELIMINE_QUIZ'].includes(app.statut) ? '#dc2626' : '#2563eb' }}>{app.statut}</strong></p>
                             <p>{getStatusDesc(app.statut)}</p>
                           </div>
                         </div>
@@ -778,17 +804,17 @@ const DetailCandidature = () => {
                 </div>
 
                 {/* ── Sidebar droite ──────────────────────────────────────── */}
-                <div style={{display:'flex',flexDirection:'column',gap:'1.5rem'}}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
                   {/* Score quiz — ACCEPTE_QUIZ, ELIMINE_QUIZ, ENTRETIEN_PLANIFIE, ACCEPTE, REFUSE */}
                   {showQuizScore && (
-                    <div className="dc-score-card" style={{background:quizScoreBg, border:quizScoreBorder}}>
+                    <div className="dc-score-card" style={{ background: quizScoreBg, border: quizScoreBorder }}>
                       <div className="dc-score-header">
                         <span className="dc-score-tag" style={quizScoreTagStyle}>{quizScoreTagLabel}</span>
-                        <span className="material-symbols-outlined" style={{color:quizScoreIconColor}}>{quizScoreTagIcon}</span>
+                        <span className="material-symbols-outlined" style={{ color: quizScoreIconColor }}>{quizScoreTagIcon}</span>
                       </div>
-                      <div className="dc-score-big" style={{color:quizScoreColor}}>
-                        {app.scoreQuiz}<span style={{fontSize:'1.5rem',fontWeight:600,color:'rgba(255,255,255,0.4)'}}>/50</span>
+                      <div className="dc-score-big" style={{ color: quizScoreColor }}>
+                        {app.scoreQuiz}<span style={{ fontSize: '1.5rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>/50</span>
                       </div>
                       <div className="dc-score-label">Score technique</div>
                     </div>
@@ -796,13 +822,13 @@ const DetailCandidature = () => {
 
                   {/* Score entretien — ACCEPTE ou REFUSE */}
                   {showEntretienScore && (
-                    <div className="dc-score-card" style={{background:'linear-gradient(135deg,#1a0f00,#3d2200)',border:'1px solid rgba(245,158,11,0.3)'}}>
+                    <div className="dc-score-card" style={{ background: 'linear-gradient(135deg,#1a0f00,#3d2200)', border: '1px solid rgba(245,158,11,0.3)' }}>
                       <div className="dc-score-header">
-                        <span className="dc-score-tag" style={{background:'rgba(245,158,11,0.2)',color:'#fbbf24',border:'1px solid rgba(245,158,11,0.35)'}}>ENTRETIEN</span>
-                        <span className="material-symbols-outlined" style={{color:'#fbbf24'}}>forum</span>
+                        <span className="dc-score-tag" style={{ background: 'rgba(245,158,11,0.2)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.35)' }}>ENTRETIEN</span>
+                        <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>forum</span>
                       </div>
-                      <div className="dc-score-big" style={{color:'#fbbf24'}}>
-                        {app.scoreEntretien}<span style={{fontSize:'1.5rem',fontWeight:600,color:'rgba(255,255,255,0.4)'}}>/100</span>
+                      <div className="dc-score-big" style={{ color: '#fbbf24' }}>
+                        {app.scoreEntretien}<span style={{ fontSize: '1.5rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>/100</span>
                       </div>
                       <div className="dc-score-label">Score entretien</div>
                     </div>
@@ -844,8 +870,8 @@ const DetailCandidature = () => {
                       </div>
                       <button
                         className="dc-interview-btn-primary"
-                        style={{marginTop:'.75rem'}}
-onClick={() => navigate(`/candidat/entretien/${app.roomToken}`)}                      >
+                        style={{ marginTop: '.75rem' }}
+                        onClick={() => navigate(`/candidat/entretien/${app.roomToken}`)}                      >
                         <span className="material-symbols-outlined">video_call</span>Rejoindre l'entretien
                       </button>
                       <p className="dc-interview-note">Connectez-vous 5 minutes avant l'heure prévue.</p>
@@ -859,27 +885,27 @@ onClick={() => navigate(`/candidat/entretien/${app.roomToken}`)}                
                       {cvUrl ? (
                         <div className="dc-doc-item">
                           <div className="dc-doc-left">
-                            <span className="material-symbols-outlined" style={{color:'#ef4444'}}>picture_as_pdf</span>
-                            <div style={{minWidth:0}}><p className="dc-doc-name">{cvName}</p><p className="dc-doc-sub">Curriculum Vitae</p></div>
+                            <span className="material-symbols-outlined" style={{ color: '#ef4444' }}>picture_as_pdf</span>
+                            <div style={{ minWidth: 0 }}><p className="dc-doc-name">{cvName}</p><p className="dc-doc-sub">Curriculum Vitae</p></div>
                           </div>
                           <div className="dc-doc-actions">
                             <button className="dc-doc-btn" title="Voir" onClick={() => openDoc(cvUrl, cvName)}><span className="material-symbols-outlined">visibility</span></button>
-                            <a href={cvUrl} download={cvName} className="dc-doc-btn" title="Télécharger" style={{display:'flex'}}><span className="material-symbols-outlined">download</span></a>
+                            <a href={cvUrl} download={cvName} className="dc-doc-btn" title="Télécharger" style={{ display: 'flex' }}><span className="material-symbols-outlined">download</span></a>
                           </div>
                         </div>
                       ) : (
-                        <div className="dc-doc-item" style={{opacity:0.5}}>
+                        <div className="dc-doc-item" style={{ opacity: 0.5 }}>
                           <div className="dc-doc-left">
-                            <span className="material-symbols-outlined" style={{color:'#94a3b8'}}>picture_as_pdf</span>
-                            <div><p className="dc-doc-name" style={{color:'#94a3b8'}}>CV non soumis</p><p className="dc-doc-sub">Curriculum Vitae</p></div>
+                            <span className="material-symbols-outlined" style={{ color: '#94a3b8' }}>picture_as_pdf</span>
+                            <div><p className="dc-doc-name" style={{ color: '#94a3b8' }}>CV non soumis</p><p className="dc-doc-sub">Curriculum Vitae</p></div>
                           </div>
                         </div>
                       )}
-                      <div className="dc-doc-item" style={{opacity: lmText ? 1 : 0.5}}>
+                      <div className="dc-doc-item" style={{ opacity: lmText ? 1 : 0.5 }}>
                         <div className="dc-doc-left">
-                          <span className="material-symbols-outlined" style={{color: lmText ? '#3b82f6' : '#94a3b8'}}>edit_note</span>
-                          <div style={{minWidth:0}}>
-                            <p className="dc-doc-name" style={{color: lmText ? '#0f172a' : '#94a3b8'}}>Lettre de motivation</p>
+                          <span className="material-symbols-outlined" style={{ color: lmText ? '#3b82f6' : '#94a3b8' }}>edit_note</span>
+                          <div style={{ minWidth: 0 }}>
+                            <p className="dc-doc-name" style={{ color: lmText ? '#0f172a' : '#94a3b8' }}>Lettre de motivation</p>
                             <p className="dc-doc-sub">{lmText ? `${lmText.length} caractères` : 'Non soumise'}</p>
                           </div>
                         </div>
