@@ -165,6 +165,49 @@ def _find_model_dir() -> Path:
 MODEL_DIR = _find_model_dir()
 print(f"[Model-Search] MODEL_DIR final = {MODEL_DIR} (existe={MODEL_DIR.exists()})")
 
+def _patch_model_config(model_dir: Path):
+    """Corrige automatiquement les incompatibilités de config du modèle fine-tuné."""
+    import json
+
+    # 1. Corriger tokenizer_config.json : remplacer TokenizersBackend
+    tok_cfg = model_dir / "tokenizer_config.json"
+    if tok_cfg.exists():
+        try:
+            data = json.loads(tok_cfg.read_text(encoding="utf-8"))
+            if data.get("tokenizer_class") == "TokenizersBackend":
+                data["tokenizer_class"] = "BertTokenizerFast"
+                tok_cfg.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                print("[Model-Patch] ✅ tokenizer_config.json corrigé (BertTokenizerFast)")
+        except Exception as e:
+            print(f"[Model-Patch] Erreur patch tokenizer_config: {e}")
+
+    # 2. Corriger 1_Pooling/config.json : ajouter embedding_dimension si absent
+    pooling_cfg = model_dir / "1_Pooling" / "config.json"
+    if pooling_cfg.exists():
+        try:
+            data = json.loads(pooling_cfg.read_text(encoding="utf-8"))
+            changed = False
+            if "embedding_dimension" not in data:
+                # Lire la dimension depuis config.json du modèle
+                main_cfg = model_dir / "config.json"
+                dim = 384  # valeur par défaut
+                if main_cfg.exists():
+                    mc = json.loads(main_cfg.read_text(encoding="utf-8"))
+                    dim = mc.get("hidden_size", 384)
+                data["embedding_dimension"] = dim
+                changed = True
+            if "pooling_mode" not in data and "pooling_mode_mean_tokens" in data:
+                data["pooling_mode"] = "mean" if data.get("pooling_mode_mean_tokens") else "cls"
+                changed = True
+            if changed:
+                pooling_cfg.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                print(f"[Model-Patch] ✅ 1_Pooling/config.json corrigé (dim={data['embedding_dimension']})")
+        except Exception as e:
+            print(f"[Model-Patch] Erreur patch pooling config: {e}")
+
+if MODEL_DIR.exists():
+    _patch_model_config(MODEL_DIR)
+
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
