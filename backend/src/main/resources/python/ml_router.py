@@ -225,8 +225,26 @@ CORS(app)
 # ── SentenceTransformer MiniLM (RAG) ──────────────────────────────────────────
 log.info("Chargement SentenceTransformer MiniLM...")
 from sentence_transformers import SentenceTransformer
+
+# ── Monkey-patch Pooling pour compatibilité format ancien/nouveau ──────────────
+# sentence-transformers 5.x exige 'embedding_dimension' comme argument obligatoire,
+# mais les modèles sauvegardés avec l'ancien format utilisent 'word_embedding_dimension'.
+try:
+    from sentence_transformers.sentence_transformer.modules.pooling import Pooling as _PoolingCls
+    _orig_pooling_init = _PoolingCls.__init__
+    def _compat_pooling_init(self, *args, **kwargs):
+        if not args and "embedding_dimension" not in kwargs:
+            # Compatibilité ancien format : renommer le champ
+            kwargs["embedding_dimension"] = kwargs.pop("word_embedding_dimension", 384)
+        _orig_pooling_init(self, *args, **kwargs)
+    _PoolingCls.__init__ = _compat_pooling_init
+    log.info("[Model-Patch] ✅ Pooling.__init__ patché (compatibilité v2/v5)")
+except Exception as _e:
+    log.warning("[Model-Patch] Patch Pooling non appliqué : %s", _e)
+
 _rag_model = SentenceTransformer("sentence-transformers/all-MiniLM-L12-v2")
 log.info("✅ MiniLM (RAG) prêt (dim=384)")
+
 
 # ── BERT fine-tuné (lazy, chargé au premier /score) ───────────────────────────
 _bert_model = None
