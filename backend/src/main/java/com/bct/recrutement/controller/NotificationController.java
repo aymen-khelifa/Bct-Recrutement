@@ -7,6 +7,7 @@ import com.bct.recrutement.service.NotificationService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -17,12 +18,9 @@ import java.util.List;
 public class NotificationController {
 
     private final NotificationService notificationService;
-    private final UserRepository userRepository;
 
-    public NotificationController(NotificationService notificationService,
-                                  UserRepository userRepository) {
+    public NotificationController(NotificationService notificationService) {
         this.notificationService = notificationService;
-        this.userRepository      = userRepository;
     }
 
     // Récupère l'ID du candidat connecté via le SecurityContext
@@ -30,15 +28,15 @@ public class NotificationController {
         String email = SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName();
-        return userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable : " + email));
+        return notificationService.getUserIdByEmail(email);
     }
 
     // SSE — le frontend se connecte ici au chargement
+    // La connexion DB est fermée avant d'ouvrir l'émetteur SSE
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream() {
-        return notificationService.subscribe(getCurrentUserId());
+        Long userId = getCurrentUserId(); // Proxy AOP assure la fermeture de la connexion DB
+        return notificationService.subscribe(userId);
     }
 
     // Liste toutes les notifs

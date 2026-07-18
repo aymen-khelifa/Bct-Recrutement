@@ -13,15 +13,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.bct.recrutement.entity.User;
+import com.bct.recrutement.repository.UserRepository;
+
 @Service
 @Slf4j
 public class NotificationService {
 
     private final NotificationRepository repo;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
-    public NotificationService(NotificationRepository repo, ObjectMapper objectMapper) {
+
+    public NotificationService(NotificationRepository repo, UserRepository userRepository, ObjectMapper objectMapper) {
         this.repo = repo;
+        this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+    }
+
+    @Transactional(readOnly = true)
+    public Long getUserIdByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable : " + email));
     }
 
     // Map userId → SseEmitter (un par candidat connecté)
