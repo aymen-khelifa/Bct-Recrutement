@@ -53,7 +53,7 @@ public class SujetStage {
     private String description;
 
     // Compétences stockées en JSON (liste de strings)
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "sujet_competences", joinColumns = @JoinColumn(name = "sujet_id"))
     @Column(name = "competence")
     private List<String> competences = new ArrayList<>();
