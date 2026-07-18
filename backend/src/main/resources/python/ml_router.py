@@ -113,21 +113,44 @@ PORT       = args.port
 BASE_DIR   = Path(os.path.abspath(__file__)).parent
 CHROMA_DIR = str(BASE_DIR / "chroma_cv")
 
-# Sur Azure App Service Python (Oryx), l'app tourne depuis un dossier /tmp au lieu de /home/site/wwwroot.
-# Vérifier d'abord le stockage persistant Azure (Kudu) HORS DE WWWROOT pour éviter la suppression par CI/CD.
-AZURE_PERSISTENT_MODELS_ROOT = Path("/home/site/models/bert_bct")
-AZURE_PERSISTENT_MODELS_SUB = Path("/home/site/models/models/bert_bct")
-LEGACY_WWWROOT = Path("/home/site/wwwroot/bert_bct")
+# ── Détection du modèle bert_bct (avec recherche et logs de diagnostic) ──────
+# L'upload Kudu peut créer des sous-dossiers imprévus selon la structure du ZIP.
+# On liste tout /home/site/models pour trouver config.json (marqueur du modèle).
 
-# Ordre de priorité
-if AZURE_PERSISTENT_MODELS_ROOT.exists():
-    MODEL_DIR = AZURE_PERSISTENT_MODELS_ROOT
-elif AZURE_PERSISTENT_MODELS_SUB.exists():
-    MODEL_DIR = AZURE_PERSISTENT_MODELS_SUB
-elif LEGACY_WWWROOT.exists():
-    MODEL_DIR = LEGACY_WWWROOT
-else:
-    MODEL_DIR = BASE_DIR / "models" / "bert_bct"
+_SEARCH_ROOTS = [
+    Path("/home/site/models"),
+    Path("/home/site/wwwroot"),
+    BASE_DIR / "models",
+]
+
+def _find_model_dir() -> Path:
+    """Cherche récursivement un dossier contenant config.json (SentenceTransformer)."""
+    print("[Model-Search] Recherche du modèle bert_bct...")
+    for root in _SEARCH_ROOTS:
+        if not root.exists():
+            print(f"[Model-Search] Racine absente : {root}")
+            continue
+        # Lister les 2 premiers niveaux
+        try:
+            entries = list(root.rglob("config.json"))
+        except Exception as e:
+            print(f"[Model-Search] Erreur scan {root}: {e}")
+            continue
+        print(f"[Model-Search] config.json trouvés sous {root}: {[str(e) for e in entries[:10]]}")
+        for cfg in entries:
+            candidate = cfg.parent
+            # Vérifier que c'est bien un modèle SentenceTransformer ou Transformers
+            if (candidate / "tokenizer_config.json").exists() or \
+               (candidate / "modules.json").exists() or \
+               (candidate / "pytorch_model.bin").exists() or \
+               (candidate / "model.safetensors").exists():
+                print(f"[Model-Search] ✅ Modèle détecté : {candidate}")
+                return candidate
+    print("[Model-Search] ⚠️ Aucun modèle trouvé — fallback vers modèle multilingual de base")
+    return BASE_DIR / "models" / "bert_bct"  # chemin inexistant, déclenchera le fallback
+
+MODEL_DIR = _find_model_dir()
+print(f"[Model-Search] MODEL_DIR final = {MODEL_DIR} (existe={MODEL_DIR.exists()})")
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
