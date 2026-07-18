@@ -33,9 +33,10 @@ def _fix_opencv_and_restart():
     print("[OpenCV-Fix] Installation de opencv-python-headless...")
     os.system(f"{sys.executable} -m pip install --quiet --no-cache-dir opencv-python-headless==4.10.0.84")
     
-    print("[OpenCV-Fix] ✅ Terminé. Redémarrage du processus Python pour purger la mémoire...")
-    # Remplace le processus courant par un nouveau avec les mêmes arguments
-    os.execv(sys.executable, [sys.executable] + sys.argv)
+    print("[OpenCV-Fix] ✅ Terminé. Redémarrage du processus (ou du worker) pour purger la mémoire...")
+    # Si on est sous Gunicorn/Flask, quitter avec sys.exit(0) permet au processus maître de relancer un worker proprement.
+    sys.exit(0)
+
 
 _fix_opencv_and_restart()
 import cv2
@@ -117,6 +118,8 @@ CHROMA_DIR = str(BASE_DIR / "chroma_cv")
 # L'upload Kudu peut créer des sous-dossiers imprévus selon la structure du ZIP.
 # On liste tout /home/site/models pour trouver config.json (marqueur du modèle).
 
+import zipfile
+
 _SEARCH_ROOTS = [
     Path("/custom_models"),
     Path("/mounts/modelsbct"),
@@ -126,30 +129,38 @@ _SEARCH_ROOTS = [
 ]
 
 def _find_model_dir() -> Path:
-    """Cherche récursivement un dossier contenant config.json (SentenceTransformer)."""
+    """Cherche récursivement un dossier contenant config.json ou un zip à extraire."""
     print("[Model-Search] Recherche du modèle bert_bct...")
     for root in _SEARCH_ROOTS:
         if not root.exists():
-            print(f"[Model-Search] Racine absente : {root}")
             continue
-        # Lister les 2 premiers niveaux
+            
+        # 1. Chercher un ZIP et le dézipper
+        try:
+            zips = list(root.rglob("bert_bct_model.zip"))
+            for zip_path in zips:
+                extract_dir = zip_path.parent / "bert_bct"
+                if not (extract_dir / "config.json").exists():
+                    print(f"[Model-Search] ZIP détecté, extraction en cours : {zip_path}")
+                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                        zip_ref.extractall(zip_path.parent)
+                    print("[Model-Search] ✅ Extraction terminée.")
+        except Exception as e:
+            print(f"[Model-Search] Erreur scan zip {root}: {e}")
+
+        # 2. Chercher les dossiers extraits
         try:
             entries = list(root.rglob("config.json"))
+            for cfg in entries:
+                candidate = cfg.parent
+                if (candidate / "tokenizer_config.json").exists() or (candidate / "modules.json").exists() or (candidate / "pytorch_model.bin").exists() or (candidate / "model.safetensors").exists():
+                    print(f"[Model-Search] ✅ Modèle détecté : {candidate}")
+                    return candidate
         except Exception as e:
-            print(f"[Model-Search] Erreur scan {root}: {e}")
             continue
-        print(f"[Model-Search] config.json trouvés sous {root}: {[str(e) for e in entries[:10]]}")
-        for cfg in entries:
-            candidate = cfg.parent
-            # Vérifier que c'est bien un modèle SentenceTransformer ou Transformers
-            if (candidate / "tokenizer_config.json").exists() or \
-               (candidate / "modules.json").exists() or \
-               (candidate / "pytorch_model.bin").exists() or \
-               (candidate / "model.safetensors").exists():
-                print(f"[Model-Search] ✅ Modèle détecté : {candidate}")
-                return candidate
-    print("[Model-Search] ⚠️ Aucun modèle trouvé — fallback vers modèle multilingual de base")
-    return BASE_DIR / "models" / "bert_bct"  # chemin inexistant, déclenchera le fallback
+            
+    print("[Model-Search] ⚠️ Aucun modèle trouvé — fallback vers modèle multilingual")
+    return BASE_DIR / "models" / "bert_bct"
 
 MODEL_DIR = _find_model_dir()
 print(f"[Model-Search] MODEL_DIR final = {MODEL_DIR} (existe={MODEL_DIR.exists()})")
