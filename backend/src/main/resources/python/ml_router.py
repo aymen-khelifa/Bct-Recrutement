@@ -230,12 +230,48 @@ log.info("✅ MiniLM (RAG) prêt (dim=384)")
 
 # ── BERT fine-tuné (lazy, chargé au premier /score) ───────────────────────────
 _bert_model = None
+
+def _prepare_model_dir(src: Path) -> Path:
+    """Copie le modèle dans /tmp (accessible en écriture) et patche ses configs."""
+    import shutil, json
+    dst = Path("/tmp/bert_bct_ready")
+    if dst.exists():
+        shutil.rmtree(dst)
+    shutil.copytree(str(src), str(dst))
+    print(f"[Model-Prep] Copie dans {dst} terminée.")
+
+    # Patch tokenizer_config.json
+    tok_cfg = dst / "tokenizer_config.json"
+    if tok_cfg.exists():
+        data = json.loads(tok_cfg.read_text(encoding="utf-8"))
+        if data.get("tokenizer_class") == "TokenizersBackend":
+            data["tokenizer_class"] = "BertTokenizerFast"
+            tok_cfg.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+            print("[Model-Prep] ✅ tokenizer_class corrigé → BertTokenizerFast")
+
+    # Patch 1_Pooling/config.json
+    pooling_cfg = dst / "1_Pooling" / "config.json"
+    if pooling_cfg.exists():
+        data = json.loads(pooling_cfg.read_text(encoding="utf-8"))
+        if "embedding_dimension" not in data:
+            main_cfg = dst / "config.json"
+            dim = 384
+            if main_cfg.exists():
+                dim = json.loads(main_cfg.read_text(encoding="utf-8")).get("hidden_size", 384)
+            data["embedding_dimension"] = dim
+            if "pooling_mode" not in data:
+                data["pooling_mode"] = "mean" if data.get("pooling_mode_mean_tokens", True) else "cls"
+            pooling_cfg.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+            print(f"[Model-Prep] ✅ embedding_dimension ajouté → {dim}")
+    return dst
+
 def get_bert():
     global _bert_model
     if _bert_model is None:
         if MODEL_DIR.exists():
             log.info("BERT fine-tuné chargé : %s", MODEL_DIR)
-            _bert_model = SentenceTransformer(str(MODEL_DIR))
+            ready_dir = _prepare_model_dir(MODEL_DIR)
+            _bert_model = SentenceTransformer(str(ready_dir))
         else:
             log.warning("Modèle fine-tuné absent → bert-base multilingue")
             _bert_model = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2")
@@ -243,6 +279,7 @@ def get_bert():
         except: dim = _bert_model.get_sentence_embedding_dimension()
         log.info("✅ BERT scorer prêt (dim=%d)", dim)
     return _bert_model
+
 
 
 def preload_deepface():
