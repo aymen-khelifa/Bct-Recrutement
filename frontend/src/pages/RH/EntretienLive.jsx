@@ -144,7 +144,7 @@ const styles = `
 
 /* ── Compte à rebours basé sur startedAt (heure de 1er accès, résiste refresh) ── */
 const DUREE_ENTRETIEN_MIN = 15; // durée d'un entretien
-const ALERTE_AVANT_MIN    = 2;  // alerte 2 min avant la fin
+const ALERTE_AVANT_MIN = 2;  // alerte 2 min avant la fin
 
 const useCountdownFromStart = (startedAtIso) => {
   // restant = secondes restantes avant la fin
@@ -152,9 +152,10 @@ const useCountdownFromStart = (startedAtIso) => {
 
   useEffect(() => {
     if (!startedAtIso) { //setRestant(null);
-       return; }
+      return;
+    }
 
-    const startMs  = new Date(startedAtIso).getTime();
+    const startMs = new Date(startedAtIso).getTime();
     const dureeSec = DUREE_ENTRETIEN_MIN * 60;
 
     const tick = () => {
@@ -175,7 +176,7 @@ const useCountdownFromStart = (startedAtIso) => {
   const m = Math.floor(val / 60);
   const s = val % 60;
   const label = `${p(m)}:${p(s)}`;
-  const fini  = restant != null && restant <= 0;
+  const fini = restant != null && restant <= 0;
 
   return { restant, label, fini };
 };
@@ -198,41 +199,41 @@ const EntretienLive = () => {
   const isRH = user?.role === 'ROLE_RH'
     || user?.authorities?.some(a => a.authority === 'ROLE_RH');
 
-  const [entretien,    setEntretien]    = useState(null);
-  const [loading,      setLoading]      = useState(true);
-  const [erreur,       setErreur]       = useState('');
-  const [activeTab,    setActiveTab]    = useState('info');
-  const [notes,        setNotes]        = useState('');
-  const [micOn,        setMicOn]        = useState(true);
-  const [camOn,        setCamOn]        = useState(true);
-  const [started,      setStarted]      = useState(false);
-  const [showConfirm,  setShowConfirm]  = useState(false);
-  const [savingNotes,  setSavingNotes]  = useState(false);
-  const [toast,        setToast]        = useState(null);
-  const [peerConnected,setPeerConnected]= useState(false);
+  const [entretien, setEntretien] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState('');
+  const [activeTab, setActiveTab] = useState('info');
+  const [notes, setNotes] = useState('');
+  const [micOn, setMicOn] = useState(true);
+  const [camOn, setCamOn] = useState(true);
+  const [started, setStarted] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [peerConnected, setPeerConnected] = useState(false);
   const [remoteStream, setRemoteStream] = useState(null);
 
   // ✅ Note de fin d'entretien (RH)
   const [scoreEntretien, setScoreEntretien] = useState(null); // /10
-  const [notesFin,       setNotesFin]       = useState('');
-  const [terminating,    setTerminating]    = useState(false);
+  const [notesFin, setNotesFin] = useState('');
+  const [terminating, setTerminating] = useState(false);
   // ✅ Heure de début réelle (1er accès, depuis la BDD) pour le compte à rebours
-  const [startedAt,      setStartedAt]      = useState(null);
+  const [startedAt, setStartedAt] = useState(null);
 
   // Refs
-  const localVideoRef  = useRef(null);
+  const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const localStreamRef = useRef(null);
-  const pcRef          = useRef(null);
-  const wsRef          = useRef(null);
+  const pcRef = useRef(null);
+  const wsRef = useRef(null);
   const makingOfferRef = useRef(false);
-  const camBusyRef     = useRef(false); // ✅ évite double-clic caméra
-  const alertedRef     = useRef(false); // ✅ évite de notifier plusieurs fois
+  const camBusyRef = useRef(false); // ✅ évite double-clic caméra
+  const alertedRef = useRef(false); // ✅ évite de notifier plusieurs fois
   // ✅ Compte à rebours 15:00 → 00:00 basé sur startedAt (résiste au refresh)
   const { restant, label: timerLabel, fini } = useCountdownFromStart(startedAt);
 
-  const showToast = (msg, type='success', duration=3500) => {
-    setToast({msg,type}); setTimeout(()=>setToast(null), duration);
+  const showToast = (msg, type = 'success', duration = 3500) => {
+    setToast({ msg, type }); setTimeout(() => setToast(null), duration);
   };
 
   /* ── 1. Charger infos salle + démarrer le chrono (RH uniquement) ────────── */
@@ -258,7 +259,7 @@ const EntretienLive = () => {
           // ✅ Le candidat lit seulement startedAt (ne déclenche RIEN)
           setStartedAt(data.startedAt || null);
         }
-      } catch(e) {
+      } catch (e) {
         setErreur(e.response?.status === 404 ? 'Salle introuvable.' : 'Erreur de connexion.');
       } finally { setLoading(false); }
     };
@@ -275,13 +276,13 @@ const EntretienLive = () => {
           video: { width: 640, height: 480, facingMode: 'user' },
           audio: true,
         });
-        if (cancelled) { stream.getTracks().forEach(t=>t.stop()); return; }
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
         localStreamRef.current = stream;
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
-          await localVideoRef.current.play().catch(()=>{});
+          await localVideoRef.current.play().catch(() => { });
         }
-      } catch(e) {
+      } catch (e) {
         console.warn('[EntretienLive] Caméra:', e.message);
       } finally {
         if (!cancelled) setStarted(true);
@@ -295,9 +296,12 @@ const EntretienLive = () => {
   useEffect(() => {
     if (!started || erreur) return;
 
-    const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const wsUrl   = `${wsProto}://${window.location.host}/ws/signaling/${roomToken}`;
-    const ws      = new WebSocket(wsUrl);
+    const isDev = import.meta.env.DEV;
+    const wsUrl = isDev
+      ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/signaling/${roomToken}`
+      : `wss://recrutement-backend-a5g6cbfvbfcgh3g6.germanywestcentral-01.azurewebsites.net/ws/signaling/${roomToken}`;
+
+    const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     const createPC = () => {
@@ -315,7 +319,7 @@ const EntretienLive = () => {
         setRemoteStream(stream);
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = stream;
-          remoteVideoRef.current.play().catch(()=>{});
+          remoteVideoRef.current.play().catch(() => { });
         }
         setPeerConnected(true);
       };
@@ -345,7 +349,7 @@ const EntretienLive = () => {
 
     ws.onmessage = async (evt) => {
       const msg = JSON.parse(evt.data);
-      const pc  = pcRef.current;
+      const pc = pcRef.current;
 
       if (msg.type === 'peer-joined') {
         if (!pcRef.current) createPC();
@@ -355,7 +359,7 @@ const EntretienLive = () => {
           const offer = await pc2.createOffer();
           await pc2.setLocalDescription(offer);
           ws.send(JSON.stringify({ type: 'offer', sdp: pc2.localDescription }));
-        } catch(e) { console.error('[WebRTC] createOffer:', e); }
+        } catch (e) { console.error('[WebRTC] createOffer:', e); }
         finally { makingOfferRef.current = false; }
         return;
       }
@@ -379,7 +383,7 @@ const EntretienLive = () => {
 
       if (msg.type === 'ice-candidate') {
         try { await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); }
-        catch(e) { console.warn('[WebRTC] addIceCandidate:', e); }
+        catch (e) { console.warn('[WebRTC] addIceCandidate:', e); }
       }
 
       if (msg.type === 'peer-left') {
@@ -398,7 +402,7 @@ const EntretienLive = () => {
     return () => {
       ws.close();
       pcRef.current?.close();
-      localStreamRef.current?.getTracks().forEach(t=>t.stop());
+      localStreamRef.current?.getTracks().forEach(t => t.stop());
     };
   }, [started, erreur, roomToken]);
 
@@ -406,7 +410,7 @@ const EntretienLive = () => {
   useEffect(() => {
     if (remoteStream && remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = remoteStream;
-      remoteVideoRef.current.play().catch(()=>{});
+      remoteVideoRef.current.play().catch(() => { });
     }
   }, [remoteStream]);
 
@@ -414,7 +418,7 @@ const EntretienLive = () => {
   useEffect(() => {
     if (camOn && localVideoRef.current && localStreamRef.current) {
       localVideoRef.current.srcObject = localStreamRef.current;
-      localVideoRef.current.play().catch(()=>{});
+      localVideoRef.current.play().catch(() => { });
     }
   }, [camOn]);
 
@@ -463,7 +467,7 @@ const EntretienLive = () => {
     camBusyRef.current = true;
 
     const stream = localStreamRef.current;
-    const pc     = pcRef.current;
+    const pc = pcRef.current;
 
     try {
       if (camOn) {
@@ -476,7 +480,7 @@ const EntretienLive = () => {
         if (pc) {
           pc.getSenders().forEach(s => {
             if (s.track && s.track.kind === 'video') {
-              s.replaceTrack(null).catch(()=>{});
+              s.replaceTrack(null).catch(() => { });
             }
           });
         }
@@ -510,11 +514,11 @@ const EntretienLive = () => {
         // Ré-attacher au PiP local
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream || newStream;
-          await localVideoRef.current.play().catch(()=>{});
+          await localVideoRef.current.play().catch(() => { });
         }
         setCamOn(true);
       }
-    } catch(e) {
+    } catch (e) {
       console.warn('[toggleCam]', e);
       showToast('Impossible de réactiver la caméra', 'error');
     } finally {
@@ -543,10 +547,10 @@ const EntretienLive = () => {
 
   /* ── Cleanup média + WS ──────────────────────────────────────────────────── */
   const cleanupMedia = () => {
-   wsRef.current?.send(JSON.stringify({ type: 'bye' })); 
+    wsRef.current?.send(JSON.stringify({ type: 'bye' }));
     wsRef.current?.close();
     pcRef.current?.close();
-    localStreamRef.current?.getTracks().forEach(t=>t.stop());
+    localStreamRef.current?.getTracks().forEach(t => t.stop());
   };
 
   /* ── Terminer (RH) — enregistre note /10 + notes, puis termine ───────────── */
@@ -585,23 +589,23 @@ const EntretienLive = () => {
   };
 
   const initials = entretien?.candidatNom
-    ? entretien.candidatNom.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+    ? entretien.candidatNom.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
     : '??';
 
   const dateFmt = entretien?.dateDebut
-    ? new Date(entretien.dateDebut).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+    ? new Date(entretien.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     : '—';
 
   const tabs = isRH
-    ? [{k:'info',l:'Candidat'},{k:'notes',l:'Notes RH'}]
-    : [{k:'info',l:'Informations'}];
+    ? [{ k: 'info', l: 'Candidat' }, { k: 'notes', l: 'Notes RH' }]
+    : [{ k: 'info', l: 'Informations' }];
 
   if (loading) return (
     <div className="el-page"><style>{styles}</style>
       <div className="el-loading-screen">
-        <i className="ms el-spin" style={{fontSize:'2.5rem',color:'#003d7a'}}>progress_activity</i>
-        <p style={{fontWeight:600}}>Connexion à la salle...</p>
-        <p style={{fontSize:'.75rem',color:'#94a3b8'}}>Salle · {roomToken}</p>
+        <i className="ms el-spin" style={{ fontSize: '2.5rem', color: '#003d7a' }}>progress_activity</i>
+        <p style={{ fontWeight: 600 }}>Connexion à la salle...</p>
+        <p style={{ fontSize: '.75rem', color: '#94a3b8' }}>Salle · {roomToken}</p>
       </div>
     </div>
   );
@@ -609,10 +613,10 @@ const EntretienLive = () => {
   if (erreur) return (
     <div className="el-page"><style>{styles}</style>
       <div className="el-error-screen">
-        <i className="ms" style={{fontSize:'4rem',color:'#ef4444',fontVariationSettings:"'FILL' 1"}}>error</i>
+        <i className="ms" style={{ fontSize: '4rem', color: '#ef4444', fontVariationSettings: "'FILL' 1" }}>error</i>
         <h2>Salle introuvable</h2><p>{erreur}</p>
-        <button onClick={()=>navigate(isRH?'/rh/calendrier':'/candidat/candidatures')}
-          style={{marginTop:'1rem',padding:'.75rem 1.5rem',background:'#003d7a',border:'none',borderRadius:'.5rem',color:'#fff',fontWeight:700,cursor:'pointer',fontFamily:'Public Sans,sans-serif',display:'flex',alignItems:'center',gap:'.5rem'}}>
+        <button onClick={() => navigate(isRH ? '/rh/calendrier' : '/candidat/candidatures')}
+          style={{ marginTop: '1rem', padding: '.75rem 1.5rem', background: '#003d7a', border: 'none', borderRadius: '.5rem', color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'Public Sans,sans-serif', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
           <i className="ms">arrow_back</i> Retour
         </button>
       </div>
@@ -621,260 +625,260 @@ const EntretienLive = () => {
 
   return (
     <div className="el-page"><style>{styles}</style>
-    <div className="el-root">
+      <div className="el-root">
 
-      {toast && (
-        <div className={`el-toast ${toast.type}`}>
-          <i className="ms">{toast.type==='success'?'check_circle':'error'}</i>{toast.msg}
-        </div>
-      )}
-
-      {/* ── MODAL DE FIN ── */}
-      {showConfirm && (
-        <div className="el-confirm-overlay">
-          <div className="el-confirm-modal">
-            {isRH ? (<>
-              <h3>Terminer l'entretien</h3>
-              <p>Attribuez une note au candidat et complétez vos notes avant de clôturer.</p>
-
-              {/* Note /10 */}
-              <label className="el-finish-label">Note de l'entretien (sur 10)</label>
-              <div className="el-score-picker">
-                {Array.from({length:11}, (_,i)=>i).map(n => (
-                  <button key={n}
-                    className={`el-score-pick-btn${scoreEntretien===n?' selected':''}`}
-                    onClick={()=>setScoreEntretien(n)}>
-                    {n}
-                  </button>
-                ))}
-              </div>
-
-              {/* Notes (pré-remplies) */}
-              <label className="el-finish-label">Notes sur le candidat</label>
-              <textarea className="el-finish-textarea"
-                placeholder="Observations, points forts, axes d'amélioration..."
-                value={notesFin}
-                onChange={e=>setNotesFin(e.target.value)}/>
-
-              <div className="el-confirm-btns">
-                <button className="el-confirm-cancel" onClick={()=>setShowConfirm(false)} disabled={terminating}>
-                  Annuler
-                </button>
-                <button className="el-confirm-ok green" onClick={terminerRH}
-                  disabled={terminating || scoreEntretien==null}>
-                  {terminating ? 'Clôture...' : 'Terminer l\'entretien'}
-                </button>
-              </div>
-            </>) : (<>
-              <h3>Quitter l'entretien ?</h3>
-              <p>Vous allez quitter la salle d'entretien et revenir au détail de votre candidature.</p>
-              <div className="el-confirm-btns">
-                <button className="el-confirm-cancel" onClick={()=>setShowConfirm(false)}>Annuler</button>
-                <button className="el-confirm-ok" onClick={quitterCandidat}>Quitter</button>
-              </div>
-            </>)}
+        {toast && (
+          <div className={`el-toast ${toast.type}`}>
+            <i className="ms">{toast.type === 'success' ? 'check_circle' : 'error'}</i>{toast.msg}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* HEADER */}
-      <header className="el-header" style={{marginTop:'1%',borderRadius:'20px'}}>
-        <div className="el-header-left">
-          <div>
-            <p className="el-eyebrow">{isRH?'Entretien · Session Live':'Votre Entretien · Session Live'}</p>
-            <h1 className="el-session-title">{entretien?.sujetTitre||'—'}</h1>
-          </div>
-          <div className="el-sep"/>
-          <div className="el-live-badge">
-            <div className="el-live-dot"/>
-            {isRH?`EN DIRECT · ${entretien?.candidatNom?.toUpperCase()||''}`:'ENTRETIEN EN COURS'}
-          </div>
-          <span className={`el-role-badge ${isRH?'rh':'candidat'}`}>{isRH?'RH':'Candidat'}</span>
-        </div>
-        <div style={{display:'flex',alignItems:'center',gap:'1rem'}}>
-          <div className="glass" style={{padding:'.5rem 1rem',borderRadius:'.625rem',display:'flex',alignItems:'center',gap:'.625rem'}}>
-            <i className="ms" style={{color:'#003d7a',fontSize:'1rem'}}>schedule</i>
-            <span className="el-timer" style={(restant != null && restant <= ALERTE_AVANT_MIN*60) ? {color:'#ef4444'} : undefined}>
-              {restant == null ? (isRH ? timerLabel : "En attente") : (fini ? "Terminé" : timerLabel)}
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {/* MAIN */}
-      <div className="el-main" style={isRH ? {height:'1000px'} : {height:'auto'}}>
-
-        {/* Zone vidéo */}
-        <div className="el-video-area" style={!isRH ? {minHeight:0} : undefined}>
-          <div className="el-video-wrap" style={{boxShadow:"0 11px 34px rgba(0.2, 0.2, 0.2, 0.2)", ...(!isRH ? {minHeight:0} : {})}}>
-
-            {peerConnected && remoteStream
-              ? <video ref={remoteVideoRef} autoPlay playsInline
-                  className="el-remote-video"
-                  style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
-              : (
-                <div className="el-cam-placeholder" style={!isRH ? {minHeight:0} : undefined}>
-                  <div className="el-avatar-big">
-                    {isRH
-                      ? (entretien?.candidatPhoto ? <img src={entretien.candidatPhoto} alt=""/> : initials)
-                      : '👤'}
-                  </div>
-                  <p className="el-placeholder-name">
-                    {isRH ? entretien?.candidatNom : 'Banque Centrale de Tunisie'}
-                  </p>
-                  <div className={`el-conn-status ${peerConnected?'connected':'waiting'}`}>
-                    <i className="ms" style={{fontSize:'.875rem'}}>
-                      {peerConnected?'check_circle':'hourglass_empty'}
-                    </i>
-                    {peerConnected
-                      ? 'Connecté'
-                      : isRH
-                        ? 'En attente du candidat...'
-                        : 'En attente du recruteur...'}
-                  </div>
-                </div>
-              )
-            }
-
-            {/* PiP caméra locale */}
-            <div className="el-pip">
-              {camOn
-                ? <video ref={localVideoRef} autoPlay muted playsInline
-                    style={{width:'100%',height:'100%',objectFit:'cover',transform:'scaleX(-1)',display:'block'}}/>
-                : <div className="el-pip-off"><i className="ms" style={{color:'#94a3b8'}}>videocam_off</i></div>
-              }
-              <div className="el-pip-label">
-                <i className="ms">{micOn?'mic':'mic_off'}</i>Moi
-              </div>
-            </div>
-
-            {peerConnected && (
-              <div className="el-speaker glass">
-                <div className="el-bars">
-                  <div className="el-bar"/> <div className="el-bar"/> <div className="el-bar"/>
-                </div>
-                <span style={{fontSize:'.6875rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em'}}>
-                  {isRH?'Candidat':'RH'} · Audio
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Panneau droite */}
-        <aside className="el-panel">
-          <nav className="el-tabs glass" style={{boxShadow:"0 11px 34px rgba(0.2, 0.2, 0.2, 0.2)"}}>
-            {tabs.map(t => (
-              <button key={t.k} className={`el-tab${activeTab===t.k?' active':''}`}
-                onClick={()=>setActiveTab(t.k)}>{t.l}</button>
-            ))}
-          </nav>
-
-          <div className="el-panel-content glass" style={{boxShadow:"0 11px 34px rgba(0.2, 0.2, 0.2, 0.2)"}}>
-            {activeTab === 'info' && (<>
+        {/* ── MODAL DE FIN ── */}
+        {showConfirm && (
+          <div className="el-confirm-overlay">
+            <div className="el-confirm-modal">
               {isRH ? (<>
-                <div className="el-cand-row">
-                  <div className="el-cand-photo">
-                    {entretien?.candidatPhoto
-                      ? <img src={entretien.candidatPhoto} alt=""/>
-                      : initials}
-                  </div>
-                  <div>
-                    <p className="el-cand-name">{entretien?.candidatNom||'—'}</p>
-                    <p className="el-cand-sub">{entretien?.sujetTitre||'—'}</p>
-                    {entretien?.sujetDept && <p className="el-cand-dept">{entretien.sujetDept}</p>}
-                  </div>
+                <h3>Terminer l'entretien</h3>
+                <p>Attribuez une note au candidat et complétez vos notes avant de clôturer.</p>
+
+                {/* Note /10 */}
+                <label className="el-finish-label">Note de l'entretien (sur 10)</label>
+                <div className="el-score-picker">
+                  {Array.from({ length: 11 }, (_, i) => i).map(n => (
+                    <button key={n}
+                      className={`el-score-pick-btn${scoreEntretien === n ? ' selected' : ''}`}
+                      onClick={() => setScoreEntretien(n)}>
+                      {n}
+                    </button>
+                  ))}
                 </div>
-                <div className="el-divider"/>
-                <div>
-                  <p className="el-sec-lbl">Scores pré-entretien</p>
-                  <div className="el-scores-grid">
-                    <div className="el-score-box">
-                      <div className="el-score-num blue">{entretien?.scoreQuiz??'—'}<span className="el-score-unit">/50</span></div>
-                      <div className="el-score-lbl">Quiz Technique</div>
-                    </div>
-                    <div className="el-score-box">
-                      <div className="el-score-num green">{entretien?.scoreAi??'—'}<span className="el-score-unit">/100</span></div>
-                      <div className="el-score-lbl">Score IA CV</div>
-                    </div>
-                  </div>
+
+                {/* Notes (pré-remplies) */}
+                <label className="el-finish-label">Notes sur le candidat</label>
+                <textarea className="el-finish-textarea"
+                  placeholder="Observations, points forts, axes d'amélioration..."
+                  value={notesFin}
+                  onChange={e => setNotesFin(e.target.value)} />
+
+                <div className="el-confirm-btns">
+                  <button className="el-confirm-cancel" onClick={() => setShowConfirm(false)} disabled={terminating}>
+                    Annuler
+                  </button>
+                  <button className="el-confirm-ok green" onClick={terminerRH}
+                    disabled={terminating || scoreEntretien == null}>
+                    {terminating ? 'Clôture...' : 'Terminer l\'entretien'}
+                  </button>
                 </div>
-                <div className="el-divider"/>
               </>) : (<>
-                <div className="el-info-box">
-                  <p className="el-info-title"><i className="ms">info</i>Informations</p>
-                  <div className="el-info-row"><i className="ms">work</i><span><strong>Poste :</strong> {entretien?.sujetTitre||'—'}</span></div>
-                  {entretien?.sujetDept && <div className="el-info-row"><i className="ms">corporate_fare</i><span><strong>Département :</strong> {entretien.sujetDept}</span></div>}
-                  <div className="el-info-row"><i className="ms">mail</i><span><strong>Contact :</strong> rh@bct.tn</span></div>
+                <h3>Quitter l'entretien ?</h3>
+                <p>Vous allez quitter la salle d'entretien et revenir au détail de votre candidature.</p>
+                <div className="el-confirm-btns">
+                  <button className="el-confirm-cancel" onClick={() => setShowConfirm(false)}>Annuler</button>
+                  <button className="el-confirm-ok" onClick={quitterCandidat}>Quitter</button>
                 </div>
               </>)}
-              <div className="el-horaire">
-                <p className="el-horaire-lbl">Créneau</p>
-                <p className="el-horaire-val">{entretien?.heureDebut} – {entretien?.heureFin}</p>
-                <p className="el-horaire-date">{dateFmt}</p>
+            </div>
+          </div>
+        )}
+
+        {/* HEADER */}
+        <header className="el-header" style={{ marginTop: '1%', borderRadius: '20px' }}>
+          <div className="el-header-left">
+            <div>
+              <p className="el-eyebrow">{isRH ? 'Entretien · Session Live' : 'Votre Entretien · Session Live'}</p>
+              <h1 className="el-session-title">{entretien?.sujetTitre || '—'}</h1>
+            </div>
+            <div className="el-sep" />
+            <div className="el-live-badge">
+              <div className="el-live-dot" />
+              {isRH ? `EN DIRECT · ${entretien?.candidatNom?.toUpperCase() || ''}` : 'ENTRETIEN EN COURS'}
+            </div>
+            <span className={`el-role-badge ${isRH ? 'rh' : 'candidat'}`}>{isRH ? 'RH' : 'Candidat'}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="glass" style={{ padding: '.5rem 1rem', borderRadius: '.625rem', display: 'flex', alignItems: 'center', gap: '.625rem' }}>
+              <i className="ms" style={{ color: '#003d7a', fontSize: '1rem' }}>schedule</i>
+              <span className="el-timer" style={(restant != null && restant <= ALERTE_AVANT_MIN * 60) ? { color: '#ef4444' } : undefined}>
+                {restant == null ? (isRH ? timerLabel : "En attente") : (fini ? "Terminé" : timerLabel)}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* MAIN */}
+        <div className="el-main" style={isRH ? { height: '1000px' } : { height: 'auto' }}>
+
+          {/* Zone vidéo */}
+          <div className="el-video-area" style={!isRH ? { minHeight: 0 } : undefined}>
+            <div className="el-video-wrap" style={{ boxShadow: "0 11px 34px rgba(0.2, 0.2, 0.2, 0.2)", ...(!isRH ? { minHeight: 0 } : {}) }}>
+
+              {peerConnected && remoteStream
+                ? <video ref={remoteVideoRef} autoPlay playsInline
+                  className="el-remote-video"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                : (
+                  <div className="el-cam-placeholder" style={!isRH ? { minHeight: 0 } : undefined}>
+                    <div className="el-avatar-big">
+                      {isRH
+                        ? (entretien?.candidatPhoto ? <img src={entretien.candidatPhoto} alt="" /> : initials)
+                        : '👤'}
+                    </div>
+                    <p className="el-placeholder-name">
+                      {isRH ? entretien?.candidatNom : 'Banque Centrale de Tunisie'}
+                    </p>
+                    <div className={`el-conn-status ${peerConnected ? 'connected' : 'waiting'}`}>
+                      <i className="ms" style={{ fontSize: '.875rem' }}>
+                        {peerConnected ? 'check_circle' : 'hourglass_empty'}
+                      </i>
+                      {peerConnected
+                        ? 'Connecté'
+                        : isRH
+                          ? 'En attente du candidat...'
+                          : 'En attente du recruteur...'}
+                    </div>
+                  </div>
+                )
+              }
+
+              {/* PiP caméra locale */}
+              <div className="el-pip">
+                {camOn
+                  ? <video ref={localVideoRef} autoPlay muted playsInline
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)', display: 'block' }} />
+                  : <div className="el-pip-off"><i className="ms" style={{ color: '#94a3b8' }}>videocam_off</i></div>
+                }
+                <div className="el-pip-label">
+                  <i className="ms">{micOn ? 'mic' : 'mic_off'}</i>Moi
+                </div>
               </div>
 
-              {/* ✅ Toolbar CANDIDAT — dans le bloc info */}
-              {!isRH && (
-                <div className="el-toolbar-inner glass" style={{marginTop:'.25rem'}}>
-                  <div className="el-tool-group">
-                    <button className={`el-tool-btn${!micOn?' off':''}`} onClick={toggleMic} title={micOn?'Couper':'Activer'}>
-                      <i className="ms">{micOn?'mic':'mic_off'}</i>
-                    </button>
-                    <button className={`el-tool-btn${!camOn?' off':''}`} onClick={toggleCam} title={camOn?'Éteindre':'Rallumer'}>
-                      <i className="ms">{camOn?'videocam':'videocam_off'}</i>
-                    </button>
+              {peerConnected && (
+                <div className="el-speaker glass">
+                  <div className="el-bars">
+                    <div className="el-bar" /> <div className="el-bar" /> <div className="el-bar" />
                   </div>
-                  <div className="el-tool-group">
-                    <button className="el-end-btn" onClick={()=>setShowConfirm(true)}>
-                      <i className="ms">call_end</i>
-                      Quitter
-                    </button>
-                  </div>
+                  <span style={{ fontSize: '.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em' }}>
+                    {isRH ? 'Candidat' : 'RH'} · Audio
+                  </span>
                 </div>
               )}
-            </>)}
+            </div>
+          </div>
 
-            {activeTab === 'notes' && isRH && (<>
-              <p className="el-notes-lbl">Notes (RH uniquement)</p>
-              <textarea className="el-notes-area"
-                placeholder="Observations, points forts, axes d'amélioration..."
-                value={notes} onChange={e=>setNotes(e.target.value)}/>
-              <button className="el-save-btn" onClick={saveNotes} disabled={savingNotes}>
-                <i className="ms">{savingNotes?'progress_activity':'save'}</i>
-                {savingNotes?'Sauvegarde...':'Sauvegarder'}
+          {/* Panneau droite */}
+          <aside className="el-panel">
+            <nav className="el-tabs glass" style={{ boxShadow: "0 11px 34px rgba(0.2, 0.2, 0.2, 0.2)" }}>
+              {tabs.map(t => (
+                <button key={t.k} className={`el-tab${activeTab === t.k ? ' active' : ''}`}
+                  onClick={() => setActiveTab(t.k)}>{t.l}</button>
+              ))}
+            </nav>
+
+            <div className="el-panel-content glass" style={{ boxShadow: "0 11px 34px rgba(0.2, 0.2, 0.2, 0.2)" }}>
+              {activeTab === 'info' && (<>
+                {isRH ? (<>
+                  <div className="el-cand-row">
+                    <div className="el-cand-photo">
+                      {entretien?.candidatPhoto
+                        ? <img src={entretien.candidatPhoto} alt="" />
+                        : initials}
+                    </div>
+                    <div>
+                      <p className="el-cand-name">{entretien?.candidatNom || '—'}</p>
+                      <p className="el-cand-sub">{entretien?.sujetTitre || '—'}</p>
+                      {entretien?.sujetDept && <p className="el-cand-dept">{entretien.sujetDept}</p>}
+                    </div>
+                  </div>
+                  <div className="el-divider" />
+                  <div>
+                    <p className="el-sec-lbl">Scores pré-entretien</p>
+                    <div className="el-scores-grid">
+                      <div className="el-score-box">
+                        <div className="el-score-num blue">{entretien?.scoreQuiz ?? '—'}<span className="el-score-unit">/50</span></div>
+                        <div className="el-score-lbl">Quiz Technique</div>
+                      </div>
+                      <div className="el-score-box">
+                        <div className="el-score-num green">{entretien?.scoreAi ?? '—'}<span className="el-score-unit">/100</span></div>
+                        <div className="el-score-lbl">Score IA CV</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="el-divider" />
+                </>) : (<>
+                  <div className="el-info-box">
+                    <p className="el-info-title"><i className="ms">info</i>Informations</p>
+                    <div className="el-info-row"><i className="ms">work</i><span><strong>Poste :</strong> {entretien?.sujetTitre || '—'}</span></div>
+                    {entretien?.sujetDept && <div className="el-info-row"><i className="ms">corporate_fare</i><span><strong>Département :</strong> {entretien.sujetDept}</span></div>}
+                    <div className="el-info-row"><i className="ms">mail</i><span><strong>Contact :</strong> rh@bct.tn</span></div>
+                  </div>
+                </>)}
+                <div className="el-horaire">
+                  <p className="el-horaire-lbl">Créneau</p>
+                  <p className="el-horaire-val">{entretien?.heureDebut} – {entretien?.heureFin}</p>
+                  <p className="el-horaire-date">{dateFmt}</p>
+                </div>
+
+                {/* ✅ Toolbar CANDIDAT — dans le bloc info */}
+                {!isRH && (
+                  <div className="el-toolbar-inner glass" style={{ marginTop: '.25rem' }}>
+                    <div className="el-tool-group">
+                      <button className={`el-tool-btn${!micOn ? ' off' : ''}`} onClick={toggleMic} title={micOn ? 'Couper' : 'Activer'}>
+                        <i className="ms">{micOn ? 'mic' : 'mic_off'}</i>
+                      </button>
+                      <button className={`el-tool-btn${!camOn ? ' off' : ''}`} onClick={toggleCam} title={camOn ? 'Éteindre' : 'Rallumer'}>
+                        <i className="ms">{camOn ? 'videocam' : 'videocam_off'}</i>
+                      </button>
+                    </div>
+                    <div className="el-tool-group">
+                      <button className="el-end-btn" onClick={() => setShowConfirm(true)}>
+                        <i className="ms">call_end</i>
+                        Quitter
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>)}
+
+              {activeTab === 'notes' && isRH && (<>
+                <p className="el-notes-lbl">Notes (RH uniquement)</p>
+                <textarea className="el-notes-area"
+                  placeholder="Observations, points forts, axes d'amélioration..."
+                  value={notes} onChange={e => setNotes(e.target.value)} />
+                <button className="el-save-btn" onClick={saveNotes} disabled={savingNotes}>
+                  <i className="ms">{savingNotes ? 'progress_activity' : 'save'}</i>
+                  {savingNotes ? 'Sauvegarde...' : 'Sauvegarder'}
+                </button>
+              </>)}
+            </div>
+          </aside>
+        </div>
+
+        {/* TOOLBAR — visible/cliquable RH ; présente mais invisible pour candidat */}
+        <div className="el-toolbar" style={!isRH ? { visibility: 'hidden', pointerEvents: 'none' } : undefined}>
+          <div className="el-toolbar-inner glass">
+            <div className="el-tool-group">
+              <button className={`el-tool-btn${!micOn ? ' off' : ''}`} onClick={toggleMic} title={micOn ? 'Couper' : 'Activer'}>
+                <i className="ms">{micOn ? 'mic' : 'mic_off'}</i>
               </button>
-            </>)}
-          </div>
-        </aside>
-      </div>
-
-      {/* TOOLBAR — visible/cliquable RH ; présente mais invisible pour candidat */}
-      <div className="el-toolbar" style={!isRH ? {visibility:'hidden', pointerEvents:'none'} : undefined}>
-        <div className="el-toolbar-inner glass">
-          <div className="el-tool-group">
-            <button className={`el-tool-btn${!micOn?' off':''}`} onClick={toggleMic} title={micOn?'Couper':'Activer'}>
-              <i className="ms">{micOn?'mic':'mic_off'}</i>
-            </button>
-            <button className={`el-tool-btn${!camOn?' off':''}`} onClick={toggleCam} title={camOn?'Éteindre':'Rallumer'}>
-              <i className="ms">{camOn?'videocam':'videocam_off'}</i>
-            </button>
-          </div>
-          <div className="el-tool-group">
-            <button className="el-tool-btn" onClick={()=>setActiveTab('notes')} title="Notes">
-              <i className="ms">edit_note</i>
-            </button>
-          </div>
-          <div className="el-tool-group">
-            <button className="el-end-btn" onClick={openFinish}>
-              <i className="ms">call_end</i>
-              Terminer l'entretien
-            </button>
+              <button className={`el-tool-btn${!camOn ? ' off' : ''}`} onClick={toggleCam} title={camOn ? 'Éteindre' : 'Rallumer'}>
+                <i className="ms">{camOn ? 'videocam' : 'videocam_off'}</i>
+              </button>
+            </div>
+            <div className="el-tool-group">
+              <button className="el-tool-btn" onClick={() => setActiveTab('notes')} title="Notes">
+                <i className="ms">edit_note</i>
+              </button>
+            </div>
+            <div className="el-tool-group">
+              <button className="el-end-btn" onClick={openFinish}>
+                <i className="ms">call_end</i>
+                Terminer l'entretien
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-    </div>
+      </div>
     </div>
   );
 };
