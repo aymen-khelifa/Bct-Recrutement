@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.bct.recrutement.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -22,6 +23,7 @@ public class AdminController {
 
     @Autowired private UserRepository  userRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private UserService userService;
 
     // ── Liste de tous les utilisateurs ──────────────────────────────────────
     @GetMapping("/users")
@@ -104,7 +106,7 @@ public class AdminController {
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         if (!userRepository.existsById(id))
             return ResponseEntity.notFound().build();
-        userRepository.deleteById(id);
+        userService.deleteUserSafely(id);
         return ResponseEntity.ok(Map.of("message", "Utilisateur supprimé."));
     }
 

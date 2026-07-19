@@ -1,15 +1,12 @@
 package com.bct.recrutement.service;
 
-import com.bct.recrutement.dto.RegistrationRequest;
-import com.bct.recrutement.entity.Role;
-import com.bct.recrutement.entity.User;
+import com.bct.recrutement.entity.Candidature;
 import com.bct.recrutement.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Service
 public class UserService {
@@ -17,44 +14,48 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    @Autowired
-    private VerificationTokenService tokenService;
-
+    /**
+     * Delete a user and ALL of their dependencies manually to bypass
+     * existing foreign key constraints in the database that don't have ON DELETE CASCADE yet.
+     */
     @Transactional
-    public User registerUser(RegistrationRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email déjà utilisé");
+    public void deleteUserSafely(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            return;
         }
 
-        User user = new User();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setCreatedAt(LocalDateTime.now());
-        user.setEnabled(false);
-        user.setRole(Role.ROLE_CANDIDAT);
+        // 1. Delete tokens and profile (Direct User dependencies)
+        entityManager.createNativeQuery("DELETE FROM refresh_token WHERE user_id = :id")
+                .setParameter("id", userId).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM verification_tokens WHERE user_id = :id")
+                .setParameter("id", userId).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM password_reset_token WHERE user_id = :id")
+                .setParameter("id", userId).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM profil_candidats WHERE user_id = :id")
+                .setParameter("id", userId).executeUpdate();
 
-        user = userRepository.save(user);
+        // 2. Delete quiz related dependencies
+        entityManager.createNativeQuery("DELETE FROM quiz_session WHERE user_id = :id")
+                .setParameter("id", userId).executeUpdate();
+        
+        // Note: Table name for UserResponse might be user_response by default
+        entityManager.createNativeQuery("DELETE FROM user_response WHERE candidat_id = :id")
+                .setParameter("id", userId).executeUpdate();
 
-        // Générer et envoyer OTP
-        tokenService.sendOtp(user);
+        // 3. Delete notifications
+        entityManager.createNativeQuery("DELETE FROM notifications WHERE candidat_id = :id")
+                .setParameter("id", userId).executeUpdate();
 
-        return user;
-    }
+        // 4. Delete candidatures and their children (entretiens)
+        entityManager.createNativeQuery("DELETE FROM entretiens WHERE candidature_id IN (SELECT id FROM candidatures WHERE candidat_id = :id)")
+                .setParameter("id", userId).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM candidatures WHERE candidat_id = :id")
+                .setParameter("id", userId).executeUpdate();
 
-    @Transactional
-    public User enableUser(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-        user.setEnabled(true);
-        return userRepository.save(user);
-    }
-
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        // 5. Finally, delete the User
+        userRepository.deleteById(userId);
     }
 }
