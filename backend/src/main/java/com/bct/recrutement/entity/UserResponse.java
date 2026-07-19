@@ -1,6 +1,8 @@
 package com.bct.recrutement.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 public class UserResponse {
@@ -11,14 +13,17 @@ public class UserResponse {
 
     @ManyToOne
     @JoinColumn(name = "candidat_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User candidat;
 
     @ManyToOne
     @JoinColumn(name = "question_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Question question;
 
     @ManyToOne
     @JoinColumn(name = "option_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private QuizOption selectedOption;
 
     public Long getId() {

@@ -2,6 +2,8 @@ package com.bct.recrutement.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 public class QuizOption {
@@ -16,6 +18,7 @@ public class QuizOption {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Question question;
     public Long getId() {

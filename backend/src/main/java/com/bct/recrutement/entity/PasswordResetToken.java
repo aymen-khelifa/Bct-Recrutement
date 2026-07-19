@@ -3,6 +3,9 @@ package com.bct.recrutement.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 /**
  * Token de réinitialisation de mot de passe.
  * Expire après 15 minutes.
@@ -20,6 +23,7 @@ public class PasswordResetToken {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(nullable = false)

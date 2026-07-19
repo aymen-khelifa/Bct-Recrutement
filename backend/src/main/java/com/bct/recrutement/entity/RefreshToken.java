@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 @Entity
 @Table(name = "refresh_token")
 public class RefreshToken {
@@ -16,6 +19,7 @@ public class RefreshToken {
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(nullable = false)

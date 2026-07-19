@@ -3,6 +3,9 @@ package com.bct.recrutement.entity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 @Entity
 @Table(name = "profil_candidats")
 public class Profilcandidat {
@@ -13,6 +16,7 @@ public class Profilcandidat {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     private String specialite;

@@ -6,6 +6,9 @@ package com.bct.recrutement.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 /**
  * Enregistre une session de quiz par candidat.
  * Garantit :
@@ -25,10 +28,12 @@ public class QuizSession {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Quiz quiz;
 
     @Column(name = "started_at", nullable = false)

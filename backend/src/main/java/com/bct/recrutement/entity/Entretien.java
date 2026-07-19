@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 @Entity
 @Table(name = "entretiens")
 public class Entretien {
@@ -14,6 +17,7 @@ public class Entretien {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "candidature_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Candidature candidature;
 
     @Column(name = "date_debut", nullable = false)

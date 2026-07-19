@@ -82,4 +82,6 @@ backend/uploads/
 Thumbs.db
 *.tmp
 *.swp
-*.bak
+*.baktemp_bert_bct/
+bert_bct_model.zip
+backend/src/main/resources/python/output_sc.*
