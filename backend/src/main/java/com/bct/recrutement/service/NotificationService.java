@@ -37,24 +37,24 @@ public class NotificationService {
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable : " + email));
     }
 
-    // Map userId → SseEmitter (un par candidat connecté)
-    private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
+    // Map email → SseEmitter (un par candidat connecté)
+    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    // ── SSE : enregistrer le candidat ────────────────────────────────────
-    public SseEmitter subscribe(Long candidatId) {
+    // ── SSE : enregistrer le candidat sans DB ───────────────────────────
+    public SseEmitter subscribe(String email) {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
 
-        emitter.onCompletion(() -> emitters.remove(candidatId));
-        emitter.onTimeout(()    -> emitters.remove(candidatId));
-        emitter.onError(e       -> emitters.remove(candidatId));
+        emitter.onCompletion(() -> emitters.remove(email));
+        emitter.onTimeout(()    -> emitters.remove(email));
+        emitter.onError(e       -> emitters.remove(email));
 
-        emitters.put(candidatId, emitter);
+        emitters.put(email, emitter);
 
         // Envoyer un heartbeat immédiat pour confirmer la connexion
         try {
             emitter.send(SseEmitter.event().name("connected").data("ok"));
         } catch (Exception e) {
-            emitters.remove(candidatId);
+            emitters.remove(email);
         }
 
         return emitter;
@@ -64,7 +64,12 @@ public class NotificationService {
     @Transactional
     public void envoyer(Long candidatId, String type, String titre, String message) {
 
-        // 1. Persister en base
+        // 1. Trouver le user pour l'email
+        User user = userRepository.findById(candidatId).orElse(null);
+        if (user == null) return;
+        String email = user.getEmail();
+
+        // 2. Persister en base
         Notification notif = new Notification();
         notif.setCandidatId(candidatId);
         notif.setType(type);
@@ -73,8 +78,8 @@ public class NotificationService {
         notif.setLu(false);
         notif = repo.save(notif);
 
-        // 2. Pousser en temps réel si le candidat est connecté
-        SseEmitter emitter = emitters.get(candidatId);
+        // 3. Pousser en temps réel si le candidat est connecté
+        SseEmitter emitter = emitters.get(email);
         if (emitter != null) {
             try {
                 String json = objectMapper.writeValueAsString(notif);

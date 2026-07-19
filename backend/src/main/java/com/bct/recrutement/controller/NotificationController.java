@@ -32,11 +32,11 @@ public class NotificationController {
     }
 
     // SSE — le frontend se connecte ici au chargement
-    // La connexion DB est fermée avant d'ouvrir l'émetteur SSE
+    // Zéro connexion DB n'est ouverte ici ! (Contournement OSIV leak)
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream() {
-        Long userId = getCurrentUserId(); // Proxy AOP assure la fermeture de la connexion DB
-        return notificationService.subscribe(userId);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return notificationService.subscribe(email);
     }
 
     // Liste toutes les notifs
