@@ -24,7 +24,7 @@ jobs:
           cache: maven
 
       - name: Build and analyze with SonarCloud
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=bct-backend
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=aymen-khelifa_Bct-Recrutement -Dsonar.organization=aymen-khelifa
         working-directory: backend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -72,6 +72,9 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@master
         with:
           projectBaseDir: ml
+          args: >
+            -Dsonar.organization=aymen-khelifa
+            -Dsonar.projectKey=aymen-khelifa_Bct-Recrutement
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
