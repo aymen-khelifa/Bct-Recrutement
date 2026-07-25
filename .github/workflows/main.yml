@@ -69,7 +69,7 @@ jobs:
         working-directory: ml
 
       - name: SonarCloud Analysis
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@master
         with:
           projectBaseDir: ml
           args: >
