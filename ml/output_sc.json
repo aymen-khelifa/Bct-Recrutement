@@ -1,0 +1,157 @@
+{
+  "scoreTotal": 74.5,
+  "compatibilite": "Moyenne",
+  "recommandation": "Recommandé",
+  "scoreLettreMotivation": 42,
+  "detail": {
+    "semantique": 16.8,
+    "competences": 25,
+    "experience": 13.8,
+    "formation": 8.4,
+    "structure": 4.5,
+    "lettre": 2.1
+  },
+  "rapport": {
+    "pts_forts": [
+      "Compétences présentes : Java, Spring Boot, Angular, MySQL",
+      "Portfolio GitHub/GitLab présent"
+    ],
+    "pts_faibles": [],
+    "resume": "Score NLP+BERT : 74.5/100 (Moyenne). BERT=0.596 TF-IDF=0.168 Skills=5/5.",
+    "recommandation": "Recommandé",
+    "questions_entretien": []
+  },
+  "formule": {
+    "bert_similarity": 0.5961,
+    "tfidf_similarity": 0.1682,
+    "skills_match_ratio": 1.0,
+    "lettre_score": 0.42,
+    "domain_boost": 4.0,
+    "calcul": "(0.35×Semantic=0.479 + 0.25×Skills=1.000 + 0.20×Experience=0.690 + 0.10×Education=0.840 + 0.05×Structure=0.896 + 0.05×Lettre=0.420 + DomainBoost=4.0) × 100 = 74.5",
+    "modele": "bert-fine-tuned-bct"
+  },
+  "bert_scores": {
+    "titre": 0.6157,
+    "description": 0.5827,
+    "competences": 0.6057,
+    "global": 0.5961
+  },
+  "skills": {
+    "ratio": 1.0,
+    "presentes": [
+      "Java",
+      "Spring Boot",
+      "Angular",
+      "MySQL",
+      "Git"
+    ],
+    "partielles": [],
+    "manquantes": [],
+    "total": 5
+  },
+  "informations": {
+    "email": "john.doe@email.com",
+    "telephone": "+216 22 333 444",
+    "langue": "fr",
+    "niveauDiplome": 4,
+    "diplomeLabel": "Master",
+    "ecoleDetectee": "École Supérieure Privée d'Ingénierie",
+    "moisExperience": 0,
+    "hasGithub": true,
+    "hasLinkedin": false,
+    "nbMots": 91,
+    "projets": [
+      {
+        "nom": "web. Technologies",
+        "techno": [
+          "Node.js",
+          "React"
+        ],
+        "domaine": "bancaire"
+      },
+      {
+        "nom": "de fin d'études (2022)",
+        "techno": [
+          "Application de gestion bancaire (Spring",
+          "Angular",
+          "MySQL)"
+        ],
+        "domaine": "bancaire"
+      }
+    ],
+    "experiences": [
+      {
+        "entreprise": "BCT",
+        "duree_mois": 5,
+        "domaine": "bancaire"
+      },
+      {
+        "entreprise": "EasySoft",
+        "duree_mois": 2,
+        "domaine": "tech"
+      }
+    ],
+    "nb_projets": 2,
+    "nb_experiences": 2
+  },
+  "nlp_structurel": {
+    "score": 0.8964,
+    "details": {
+      "ner_skills_match": 1.0,
+      "domaine_alignment": 1.0,
+      "projets_bert": 0.582,
+      "formation_niveau": 1.0,
+      "experience_score": 0.8
+    },
+    "entites": {
+      "domaine_cv": "fullstack_web",
+      "domaine_poste": "fullstack_web",
+      "ecoles": [
+        "esprit",
+        "isi"
+      ],
+      "entreprises": [
+        "bct",
+        "easysoft"
+      ],
+      "technologies_cv": [
+        "postgresql",
+        "mysql",
+        "spring boot",
+        "python",
+        "typescript",
+        "node",
+        "angular",
+        "react"
+      ],
+      "niveau_detecte": "ingenieur"
+    },
+    "methode": "NLP_PUR_BERT_NER_RULES"
+  },
+  "experience": {
+    "score": 0.69,
+    "nb_stages": 2,
+    "duree_mois": 7,
+    "nb_projets": 2,
+    "has_github": true,
+    "has_bancaire": true,
+    "score_detail": {
+      "stages": 0.3,
+      "projets": 0.14,
+      "github": 0.1,
+      "bancaire": 0.15,
+      "tech_stage": 0.0
+    }
+  },
+  "education": {
+    "score": 0.84,
+    "niveau_detecte": "master",
+    "ecole_detectee": "École Supérieure Privée d'Ingénierie",
+    "score_detail": {
+      "niveau": 0.85,
+      "ecole": 1.0,
+      "specialite": 1.0,
+      "certifications": 0.0
+    }
+  }
+}

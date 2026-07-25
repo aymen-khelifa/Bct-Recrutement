@@ -32,7 +32,9 @@ build/
 *.local
 .next/
 .nuxt/
-
+ml/models/
+temp_bert_bct/
+*.safetensors
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
@@ -46,7 +48,7 @@ venv/
 env/
 .env/
 backend/src/main/resources/python/venv/
-
+*.env/
 # Secrets
 .env
 backend/src/main/resources/python/.env

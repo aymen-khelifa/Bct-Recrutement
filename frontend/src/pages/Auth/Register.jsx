@@ -182,14 +182,14 @@ body {
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', confirmPassword: ''
-   
+
   });
-  const [showPassword,     setShowPassword]     = useState(false);
-  const [showConfirm,      setShowConfirm]       = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState('');
-  const [error,            setError]            = useState('');
-  const [successMessage,   setSuccessMessage]   = useState('');
-  const [loading,          setLoading]          = useState(false);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -202,10 +202,10 @@ const Register = () => {
 
   const checkPasswordStrength = (pwd) => {
     if (!pwd) return setPasswordStrength('');
-    const hasUpperCase  = /[A-Z]/.test(pwd);
-    const hasDigit      = /\d/.test(pwd);
-    const hasSpecial    = /[@$!%*?&]/.test(pwd);
-    const isLongEnough  = pwd.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(pwd);
+    const hasDigit = /\d/.test(pwd);
+    const hasSpecial = /[@$!%*?&]/.test(pwd);
+    const isLongEnough = pwd.length >= 8;
     if (isLongEnough && hasUpperCase && hasDigit && hasSpecial) setPasswordStrength('Fort');
     else if (pwd.length >= 8) setPasswordStrength('Moyen');
     else setPasswordStrength('Faible');
@@ -214,9 +214,9 @@ const Register = () => {
   const getPasswordColor = (strength) => {
     switch (strength) {
       case 'Faible': return '#ef4444';
-      case 'Moyen':  return '#f97316';
-      case 'Fort':   return '#16a34a';
-      default:       return '#94a3b8';
+      case 'Moyen': return '#f97316';
+      case 'Fort': return '#16a34a';
+      default: return '#94a3b8';
     }
   };
 
@@ -231,7 +231,7 @@ const Register = () => {
   const isFormValid =
     !loading &&
     formData.name.trim() !== '' &&
-    formData.email.trim() !== '' &&  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
+    formData.email.trim() !== '' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
     formData.password !== '' &&
     passwordStrength !== '' &&
     passwordStrength !== 'Faible' && passwordStrength !== 'Moyen' &&
@@ -245,7 +245,8 @@ const Register = () => {
     setError('');
     setSuccessMessage('');
     try {
-      await register(formData);
+      const { confirmPassword, ...payload } = formData;
+      await register(payload);
       setSuccessMessage('Inscription réussie ! Redirection vers la vérification...');
       setTimeout(() => {
         navigate(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
@@ -268,7 +269,7 @@ const Register = () => {
         {/* ── HEADER ── */}
         <header className="reg-header">
           <div className="reg-header-brand">
-            <img src={bctImage} style={{ width: '233px',marginBottom:'25px' }} alt="BCT" />
+            <img src={bctImage} style={{ width: '233px', marginBottom: '25px' }} alt="BCT" />
             <div>
               <h1>Banque Centrale</h1>
               <p>Plateforme de Recrutement</p>
@@ -280,7 +281,7 @@ const Register = () => {
               <span className="material-symbols-outlined">arrow_back</span>
               Retour à l'accueil
             </Link>
-           
+
           </div>
         </header>
 
@@ -338,15 +339,15 @@ const Register = () => {
                         value={formData.email} onChange={handleChange} required />
                     </div>
                     {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
-  <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', marginLeft: '0.25rem' }}>
-    ✗ Format email invalide
-  </div>
-)}
-{formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
-  <div style={{ color: '#16a34a', fontSize: '0.75rem', marginTop: '0.25rem', marginLeft: '0.25rem' }}>
-    ✓ Email valide
-  </div>
-)}
+                      <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', marginLeft: '0.25rem' }}>
+                        ✗ Format email invalide
+                      </div>
+                    )}
+                    {formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                      <div style={{ color: '#16a34a', fontSize: '0.75rem', marginTop: '0.25rem', marginLeft: '0.25rem' }}>
+                        ✓ Email valide
+                      </div>
+                    )}
                   </div>
 
                   {/* Mot de passe */}
@@ -370,33 +371,33 @@ const Register = () => {
                       </button>
                     </div>
                     {/* Indicateur force */}
-                   {passwordStrength && (
-  <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', marginLeft: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-    
-    {/* Ligne force globale */}
-    <div style={{ color: getPasswordColor(passwordStrength), fontWeight: 600 }}>
-      {passwordStrength === 'Faible' && '⚠ '}
-      {passwordStrength === 'Moyen'  && '◉ '}
-      {passwordStrength === 'Fort'   && '✓ '}
-      {passwordStrength}
-    </div>
+                    {passwordStrength && (
+                      <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', marginLeft: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
 
-    {/* Critères détaillés */}
-    <div style={{ color: formData.password.length >= 8 ? '#16a34a' : '#ef4444' }}>
-      {formData.password.length >= 8 ? '✓' : '✗'} Minimum 8 caractères
-    </div>
-    <div style={{ color: /[A-Z]/.test(formData.password) ? '#16a34a' : '#ef4444' }}>
-      {/[A-Z]/.test(formData.password) ? '✓' : '✗'} Une lettre majuscule
-    </div>
-    <div style={{ color: /\d/.test(formData.password) ? '#16a34a' : '#ef4444' }}>
-      {/\d/.test(formData.password) ? '✓' : '✗'} Un chiffre
-    </div>
-    <div style={{ color: /[@$!%*?&]/.test(formData.password) ? '#16a34a' : '#ef4444' }}>
-      {/[@$!%*?&]/.test(formData.password) ? '✓' : '✗'} Un caractère spécial (@$!%*?&)
-    </div>
+                        {/* Ligne force globale */}
+                        <div style={{ color: getPasswordColor(passwordStrength), fontWeight: 600 }}>
+                          {passwordStrength === 'Faible' && '⚠ '}
+                          {passwordStrength === 'Moyen' && '◉ '}
+                          {passwordStrength === 'Fort' && '✓ '}
+                          {passwordStrength}
+                        </div>
 
-  </div>
-)}
+                        {/* Critères détaillés */}
+                        <div style={{ color: formData.password.length >= 8 ? '#16a34a' : '#ef4444' }}>
+                          {formData.password.length >= 8 ? '✓' : '✗'} Minimum 8 caractères
+                        </div>
+                        <div style={{ color: /[A-Z]/.test(formData.password) ? '#16a34a' : '#ef4444' }}>
+                          {/[A-Z]/.test(formData.password) ? '✓' : '✗'} Une lettre majuscule
+                        </div>
+                        <div style={{ color: /\d/.test(formData.password) ? '#16a34a' : '#ef4444' }}>
+                          {/\d/.test(formData.password) ? '✓' : '✗'} Un chiffre
+                        </div>
+                        <div style={{ color: /[@$!%*?&]/.test(formData.password) ? '#16a34a' : '#ef4444' }}>
+                          {/[@$!%*?&]/.test(formData.password) ? '✓' : '✗'} Un caractère spécial (@$!%*?&)
+                        </div>
+
+                      </div>
+                    )}
                     {!passwordStrength && (
                       <p className="reg-hint">Minimum 8 caractères recommandés</p>
                     )}
@@ -433,10 +434,10 @@ const Register = () => {
                     )}
                   </div>
 
-                
+
                 </div>
 
-            
+
                 {/* Submit */}
                 <div className="reg-submit-wrap">
                   <button className="reg-submit" type="submit" disabled={!isFormValid}>

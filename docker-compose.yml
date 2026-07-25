@@ -1,0 +1,75 @@
+services:
+
+  # Base de données MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: bct-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: recrutement
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Java Spring Boot
+  backend:
+    build: ./backend
+    container_name: bct-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/recrutement
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      BCT_ML_SERVICE_URL: http://ml:8000
+      # On écrase la config SMTP de prod (application.properties) pour l'envoyer vers Mailhog
+      SPRING_MAIL_HOST: mailhog
+      SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_USERNAME: ""
+      SPRING_MAIL_PASSWORD: ""
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: false
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: false
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # Serveur Fake SMTP (Capture les emails en local sans rien envoyer sur internet)
+  mailhog:
+    image: mailhog/mailhog
+    container_name: bct-mailhog
+    ports:
+      - "1025:1025" # Port SMTP (pour Spring Boot)
+      - "8025:8025" # Interface Web (pour visualiser nos emails sur Chrome)
+
+  # Microservice ML Python
+  ml:
+    build: ./ml
+    container_name: bct-ml
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - CLOUDINARY_URL=${CLOUDINARY_URL}
+    volumes:
+      - ./ml/models:/app/models  # modèles BERT persistants
+
+  # Frontend React
+  frontend:
+    build: ./frontend
+    container_name: bct-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:

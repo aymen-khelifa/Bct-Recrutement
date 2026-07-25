@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'backend/src/main/resources/python/**'
+      - 'ml/**'
   workflow_dispatch:
 
 jobs:
@@ -23,13 +23,13 @@ jobs:
 
       - name: Validate requirements.txt
         run: |
-          cd backend/src/main/resources/python
+          cd ml
           python -m pip install --upgrade pip
           pip install --dry-run -r requirements.txt 2>&1 | tail -5
 
       - name: Create startup script
         run: |
-          cd backend/src/main/resources/python
+          cd ml
           cat > startup.sh << 'EOF'
           #!/bin/bash
           mkdir -p /home/site/wwwroot/models
@@ -43,8 +43,8 @@ jobs:
 
       - name: Prepare deployment package
         run: |
-          cd backend/src/main/resources/python
-          zip -r ../../../../../ml_deploy.zip . \
+          cd ml
+          zip -r ../ml_deploy.zip . \
             --exclude "venv/*" \
             --exclude "__pycache__/*" \
             --exclude "*.pyc" \
@@ -53,7 +53,7 @@ jobs:
             --exclude "models/*" \
             --exclude "chroma_cv/*" \
             --exclude "pairs_bct.csv"
-          echo "Package size: $(du -sh ../../../../../ml_deploy.zip)"
+          echo "Package size: $(du -sh ../ml_deploy.zip)"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
