@@ -166,6 +166,30 @@ public class FileProxyController {
             return ResponseEntity.status(500).build();
         }
     }
+    @GetMapping("/cv/me/url")
+    @PreAuthorize("hasRole('CANDIDAT')")
+    public ResponseEntity<Map<String, String>> getMyCvUrl(@AuthenticationPrincipal UserDetails ud) {
+        try {
+            var user   = userRepository.findByEmail(ud.getUsername()).orElseThrow();
+            var profil = profilRepository.findByUser(user).orElseThrow();
+
+            String cvPublicId = profil.getCvPublicId();
+            String cvUrl      = profil.getCv();
+
+            if (cvPublicId != null && !cvPublicId.isBlank()) {
+                String signed = cloudinaryService.signedCvUrl(cvPublicId);
+                if (signed == null) return ResponseEntity.status(500).build();
+                return ResponseEntity.ok(Map.of("url", signed));
+            } else if (cvUrl != null && !cvUrl.isBlank()) {
+                return ResponseEntity.ok(Map.of("url", cvUrl.replaceAll("/s--[^/]+--", "")));
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            log.error("[FileProxy] getMyCvUrl erreur : {}", e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
+    }
+
     @GetMapping("/cv/{userId}/url")
     @PreAuthorize("hasRole('RH') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> getCvUrl(@PathVariable Long userId) {

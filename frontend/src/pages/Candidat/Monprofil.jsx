@@ -118,7 +118,7 @@ const styles = `
   .mp-popup-dl-btn .material-symbols-outlined { font-size:1rem; }
 `;
 
-const formatBytes = (b) => b < 1024*1024 ? `${(b/1024).toFixed(0)} KB` : `${(b/(1024*1024)).toFixed(1)} MB`;
+const formatBytes = (b) => b < 1024 * 1024 ? `${(b / 1024).toFixed(0)} KB` : `${(b / (1024 * 1024)).toFixed(1)} MB`;
 
 const cvFileName = (url) => {
   if (!url) return '';
@@ -129,7 +129,7 @@ const cvFileName = (url) => {
   }
 };
 
-const NIVEAUX = ['Bac+2 (BTS / DUT)','Licence (Bac+3)','Master 1 (Bac+4)','Master 2 (Bac+5)','Ingénieur','Doctorat'];
+const NIVEAUX = ['Bac+2 (BTS / DUT)', 'Licence (Bac+3)', 'Master 1 (Bac+4)', 'Master 2 (Bac+5)', 'Ingénieur', 'Doctorat'];
 const validatePhone = (val) => {
   if (!val) return null;
   if (!/^\d{8}$/.test(val)) return '8 chiffres requis (ex: 22333444)';
@@ -137,35 +137,35 @@ const validatePhone = (val) => {
 };
 
 const MonProfil = () => {
-  const fileInputRef  = useRef(null);
+  const fileInputRef = useRef(null);
   const photoInputRef = useRef(null);
 
-  const [user,     setUser]     = useState({ name:'', email:'', phoneNumber:'', photoUrl:'' });
-  const [userForm, setUserForm] = useState({ name:'', phoneNumber:'' });
+  const [user, setUser] = useState({ name: '', email: '', phoneNumber: '', photoUrl: '' });
+  const [userForm, setUserForm] = useState({ name: '', phoneNumber: '' });
   const [phoneEditMode, setPhoneEditMode] = useState(false);
 
-  const [photoFile,    setPhotoFile]    = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
   const [profil, setProfil] = useState({
-    specialite:'', universite:'', nationalite:'', cursusActuel:'',
-    niveauInstructionActuel:'', moyDerAnnee:'', moyAvantDerAnnee:'',
-    typeDocumentIdentite:'CIN', numeroDocument:'',
+    specialite: '', universite: '', nationalite: '', cursusActuel: '',
+    niveauInstructionActuel: '', moyDerAnnee: '', moyAvantDerAnnee: '',
+    typeDocumentIdentite: 'CIN', numeroDocument: '',
   });
   const [cvExistant, setCvExistant] = useState('');
-  const [cvFile,     setCvFile]     = useState(null);
-  const [dragover,   setDragover]   = useState(false);
+  const [cvFile, setCvFile] = useState(null);
+  const [dragover, setDragover] = useState(false);
 
-  const [popup,        setPopup]        = useState(null);
+  const [popup, setPopup] = useState(null);
   const [popupLoading, setPopupLoading] = useState(false);
 
-  const [errors,  setErrors]  = useState({});
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
-  const [saving,  setSaving]  = useState(false);
-  const [toast,   setToast]   = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  const showToast = (msg, type='success') => {
-    setToast({msg, type});
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
 
@@ -174,20 +174,20 @@ const MonProfil = () => {
       try {
         const { data: u } = await axios.get('/api/auth/whoami');
         setUser(u);
-        setUserForm({ name: u.name||'', phoneNumber: u.phoneNumber||'' });
+        setUserForm({ name: u.name || '', phoneNumber: u.phoneNumber || '' });
         setPhoneEditMode(!u.phoneNumber);
         try {
           const { data: p } = await axios.get('/api/profil/me');
           setProfil({
-            specialite:              p.specialite              || '',
-            universite:              p.universite              || '',
-            nationalite:             p.nationalite             || '',
-            cursusActuel:            p.cursusActuel            || '',
+            specialite: p.specialite || '',
+            universite: p.universite || '',
+            nationalite: p.nationalite || '',
+            cursusActuel: p.cursusActuel || '',
             niveauInstructionActuel: p.niveauInstructionActuel || '',
-            moyDerAnnee:             p.moyDerAnnee      ? String(p.moyDerAnnee)      : '',
-            moyAvantDerAnnee:        p.moyAvantDerAnnee ? String(p.moyAvantDerAnnee) : '',
-            typeDocumentIdentite:    p.typeDocumentIdentite    || 'CIN',
-            numeroDocument:          p.numeroDocument          || '',
+            moyDerAnnee: p.moyDerAnnee ? String(p.moyDerAnnee) : '',
+            moyAvantDerAnnee: p.moyAvantDerAnnee ? String(p.moyAvantDerAnnee) : '',
+            typeDocumentIdentite: p.typeDocumentIdentite || 'CIN',
+            numeroDocument: p.numeroDocument || '',
           });
           setCvExistant(p.cv || '');
         } catch { /* profil vide — normal */ }
@@ -206,64 +206,60 @@ const MonProfil = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // ── openCv — fetch blob depuis le proxy Spring Boot → blob URL pour iframe ──
+  // ── openCv — fetch URL directe depuis Spring Boot pour iframe ──
   const openCv = async () => {
     if (!cvExistant) return;
-    const name  = cvFileName(cvExistant);
+    const name = cvFileName(cvExistant);
     const isPdf = name.toLowerCase().endsWith('.pdf');
 
-    setPopup({ viewUrl: null, downloadUrl: '/api/files/cv/me/dl', name, isPdf });
+    setPopup({ viewUrl: null, name, isPdf });
     setPopupLoading(true);
 
     try {
-      const res = await axios.get('/api/files/cv/me', {
-        responseType: 'blob',
-        withCredentials: true,
-      });
-      const blob    = new Blob([res.data], { type: 'application/pdf' });
-      const blobUrl = URL.createObjectURL(blob);
-      setPopup(prev => ({ ...prev, viewUrl: blobUrl }));
-    } catch(e) {
+      let url = '';
+      try {
+        // Tente de récupérer l'URL sécurisée pour "me"
+        const { data } = await axios.get('/api/files/cv/me/url', { withCredentials: true });
+        url = data.url;
+      } catch (e1) {
+        // Si /me/url n'existe pas, utilise la méthode RH avec l'ID utilisateur
+        if (user && user.id) {
+          const { data } = await axios.get(`/api/files/cv/${user.id}/url`, { withCredentials: true });
+          url = data.url;
+        } else {
+          throw e1;
+        }
+      }
+      setPopup(prev => ({ ...prev, viewUrl: url }));
+    } catch (e) {
       console.error('[openCv]', e.message);
+      showToast("Impossible d'ouvrir le CV", 'error');
       setPopup(prev => ({ ...prev, viewUrl: null }));
     } finally {
       setPopupLoading(false);
     }
   };
 
-  // ── downloadCv — téléchargement via axios (envoie le cookie JWT) ──────────
-  const downloadCv = async () => {
-    try {
-      const res = await axios.get('/api/files/cv/me/dl', {
-        responseType: 'blob',
-        withCredentials: true,
-      });
-      const blob    = new Blob([res.data], { type: 'application/pdf' });
-      const blobUrl = URL.createObjectURL(blob);
-      const a       = document.createElement('a');
-      a.href        = blobUrl;
-      a.download    = popup?.name || 'cv.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch(e) {
-      console.error('[downloadCv]', e.message);
-      showToast('Erreur téléchargement CV', 'error');
-    }
+  // ── downloadCv — téléchargement direct via l'URL ──────────
+  const downloadCv = () => {
+    if (!popup?.viewUrl) return;
+    const a = document.createElement('a');
+    a.href = popup.viewUrl;
+    a.download = popup.name || 'cv.pdf';
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const closePopup = () => {
-    if (popup?.viewUrl && popup.viewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(popup.viewUrl);
-    }
     setPopup(null);
     setPopupLoading(false);
   };
 
-  const clrErr = (k) => setErrors(e => { const c={...e}; delete c[k]; return c; });
-  const handleUserChange   = (e) => { const {name,value}=e.target; setUserForm(f=>({...f,[name]:value})); clrErr(name); };
-  const handleProfilChange = (e) => { const {name,value}=e.target; setProfil(f=>({...f,[name]:value})); clrErr(name); };
+  const clrErr = (k) => setErrors(e => { const c = { ...e }; delete c[k]; return c; });
+  const handleUserChange = (e) => { const { name, value } = e.target; setUserForm(f => ({ ...f, [name]: value })); clrErr(name); };
+  const handleProfilChange = (e) => { const { name, value } = e.target; setProfil(f => ({ ...f, [name]: value })); clrErr(name); };
 
   // ── Compression image avant upload (800px max, JPEG 82%) ────────────────
   const compressImage = (file, maxPx = 800, quality = 0.82) =>
@@ -289,8 +285,8 @@ const MonProfil = () => {
 
   const handlePhoto = async (file) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) { showToast('Format image non accepté','error'); return; }
-    if (file.size > 3*1024*1024)         { showToast('Image trop lourde (max 3 MB)','error'); return; }
+    if (!file.type.startsWith('image/')) { showToast('Format image non accepté', 'error'); return; }
+    if (file.size > 3 * 1024 * 1024) { showToast('Image trop lourde (max 3 MB)', 'error'); return; }
     // Compresser avant envoi → upload x10 plus rapide
     const compressed = await compressImage(file);
     setPhotoFile(compressed);
@@ -304,8 +300,8 @@ const MonProfil = () => {
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
-    if (!ok.includes(file.type)) { showToast('Format non accepté. Utilisez PDF ou Word.','error'); return; }
-    if (file.size > 20*1024*1024) { showToast('Fichier trop volumineux (max 20 MB)','error'); return; }
+    if (!ok.includes(file.type)) { showToast('Format non accepté. Utilisez PDF ou Word.', 'error'); return; }
+    if (file.size > 20 * 1024 * 1024) { showToast('Fichier trop volumineux (max 20 MB)', 'error'); return; }
     setCvFile(file);
     setCvExistant('');
   };
@@ -335,43 +331,43 @@ const MonProfil = () => {
     const phoneErr = validatePhone(userForm.phoneNumber);
     if (phoneErr) errs.phoneNumber = phoneErr;
     if (!userForm.phoneNumber || !userForm.phoneNumber.trim()) errs.phoneNumber = 'Numéro de téléphone requis';
-    if (!profil.specialite.trim())       errs.specialite              = 'Champ requis';
-    if (!profil.universite.trim())       errs.universite              = 'Champ requis';
-    if (!profil.nationalite.trim())      errs.nationalite             = 'Champ requis';
-    if (!profil.cursusActuel.trim())     errs.cursusActuel            = 'Champ requis';
+    if (!profil.specialite.trim()) errs.specialite = 'Champ requis';
+    if (!profil.universite.trim()) errs.universite = 'Champ requis';
+    if (!profil.nationalite.trim()) errs.nationalite = 'Champ requis';
+    if (!profil.cursusActuel.trim()) errs.cursusActuel = 'Champ requis';
     if (!profil.niveauInstructionActuel) errs.niveauInstructionActuel = 'Champ requis';
     if (!profil.numeroDocument.trim()) {
       errs.numeroDocument = 'Champ requis';
     } else {
       const num = profil.numeroDocument.trim();
-      if (profil.typeDocumentIdentite==='CIN' && !/^\d{8}$/.test(num))
+      if (profil.typeDocumentIdentite === 'CIN' && !/^\d{8}$/.test(num))
         errs.numeroDocument = 'Le CIN doit contenir exactement 8 chiffres';
-      else if (profil.typeDocumentIdentite==='PASSEPORT' && !/^[A-Z]{2}\d{7}$/i.test(num))
+      else if (profil.typeDocumentIdentite === 'PASSEPORT' && !/^[A-Z]{2}\d{7}$/i.test(num))
         errs.numeroDocument = '2 lettres + 7 chiffres (ex: AB1234567)';
     }
-    const m1=parseFloat(profil.moyDerAnnee), m2=parseFloat(profil.moyAvantDerAnnee);
-    if (isNaN(m1)||m1<0||m1>20) errs.moyDerAnnee      = 'Entre 0 et 20';
-    if (isNaN(m2)||m2<0||m2>20) errs.moyAvantDerAnnee = 'Entre 0 et 20';
+    const m1 = parseFloat(profil.moyDerAnnee), m2 = parseFloat(profil.moyAvantDerAnnee);
+    if (isNaN(m1) || m1 < 0 || m1 > 20) errs.moyDerAnnee = 'Entre 0 et 20';
+    if (isNaN(m2) || m2 < 0 || m2 > 20) errs.moyAvantDerAnnee = 'Entre 0 et 20';
     return errs;
   };
 
   const saveCompte = async () => {
     const fd = new FormData();
-    fd.append('name',        userForm.name.trim());
+    fd.append('name', userForm.name.trim());
     fd.append('phoneNumber', userForm.phoneNumber.trim());
     if (photoFile) fd.append('photo', photoFile);
-    const { data } = await axios.patch('/api/auth/me', fd, { headers:{'Content-Type':'multipart/form-data'} });
+    const { data } = await axios.patch('/api/auth/me', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     setUser(data);
-    setUserForm({ name: data.name||'', phoneNumber: data.phoneNumber||'' });
+    setUserForm({ name: data.name || '', phoneNumber: data.phoneNumber || '' });
     setPhotoFile(null);
     setPhoneEditMode(false);
   };
 
   const saveProfil = async () => {
     const fd = new FormData();
-    Object.entries(profil).forEach(([k,v]) => { if (v !== '') fd.append(k, v); });
+    Object.entries(profil).forEach(([k, v]) => { if (v !== '') fd.append(k, v); });
     if (cvFile) fd.append('cvFile', cvFile);
-    const { data } = await axios.post('/api/profil/me', fd, { headers:{'Content-Type':'multipart/form-data'} });
+    const { data } = await axios.post('/api/profil/me', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     setCvExistant(data.cv || '');
     setCvFile(null);
   };
@@ -394,13 +390,13 @@ const MonProfil = () => {
     }
   };
 
-  const initiales     = (user.name?.[0] || '?').toUpperCase();
-  const rawPhoto      = user.photoUrl || user.photo_url || '';
-  const avatarSrc     = photoPreview || rawPhoto || null;
-  const hasCv         = cvFile || cvExistant;
+  const initiales = (user.name?.[0] || '?').toUpperCase();
+  const rawPhoto = user.photoUrl || user.photo_url || '';
+  const avatarSrc = photoPreview || rawPhoto || null;
+  const hasCv = cvFile || cvExistant;
   const cvDisplayName = cvFile ? cvFile.name : cvFileName(cvExistant);
-  const cvMeta        = cvFile ? `${formatBytes(cvFile.size)} · Prêt à envoyer` : 'Téléchargé avec succès';
-  const phoneValid    = phoneEditMode && /^\d{8}$/.test(userForm.phoneNumber);
+  const cvMeta = cvFile ? `${formatBytes(cvFile.size)} · Prêt à envoyer` : 'Téléchargé avec succès';
+  const phoneValid = phoneEditMode && /^\d{8}$/.test(userForm.phoneNumber);
 
   return (
     <>
@@ -434,15 +430,15 @@ const MonProfil = () => {
                   ) : (
                     <div className="mp-popup-no-preview">
                       <span className="material-symbols-outlined">error_outline</span>
-                      <p style={{fontSize:'0.875rem',color:'#64748b'}}>Impossible de charger le document.</p>
+                      <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Impossible de charger le document.</p>
                     </div>
                   )
                 ) : (
                   <div className="mp-popup-no-preview">
                     <span className="material-symbols-outlined">description</span>
-                    <p style={{fontSize:'0.875rem',color:'#64748b'}}>Aperçu non disponible pour les fichiers Word.</p>
+                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Aperçu non disponible pour les fichiers Word.</p>
                     <button type="button" onClick={downloadCv}
-                       style={{color:'#003d7a',fontWeight:700,fontSize:'0.875rem',background:'none',border:'none',cursor:'pointer',fontFamily:'Public Sans,sans-serif'}}>
+                      style={{ color: '#003d7a', fontWeight: 700, fontSize: '0.875rem', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Public Sans,sans-serif' }}>
                       Télécharger le fichier
                     </button>
                   </div>
@@ -461,7 +457,7 @@ const MonProfil = () => {
 
         {toast && (
           <div className={`mp-toast ${toast.type}`}>
-            <span className="material-symbols-outlined">{toast.type==='success'?'check_circle':'error'}</span>
+            <span className="material-symbols-outlined">{toast.type === 'success' ? 'check_circle' : 'error'}</span>
             {toast.msg}
           </div>
         )}
@@ -494,22 +490,22 @@ const MonProfil = () => {
                 <div className="mp-avatar-row">
                   <div className="mp-avatar-wrap">
                     {avatarSrc
-                      ? <img src={avatarSrc} alt="avatar" className="mp-avatar"/>
+                      ? <img src={avatarSrc} alt="avatar" className="mp-avatar" />
                       : <div className="mp-avatar-placeholder"><span>{initiales}</span></div>
                     }
                     <button type="button" className="mp-avatar-edit-btn"
-                      onClick={()=>photoInputRef.current?.click()} title="Changer la photo">
+                      onClick={() => photoInputRef.current?.click()} title="Changer la photo">
                       <span className="material-symbols-outlined">photo_camera</span>
                     </button>
-                    <input ref={photoInputRef} type="file" accept="image/*" style={{display:'none'}}
-                      onChange={e=>handlePhoto(e.target.files?.[0])}/>
+                    <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+                      onChange={e => handlePhoto(e.target.files?.[0])} />
                   </div>
                   <div className="mp-avatar-info">
                     <h3>{user.name}</h3>
                     <p>{user.email}</p>
                     <p className="mp-avatar-hint">
                       {photoFile
-                        ? <><span style={{color:'#003d7a',fontWeight:600}}>{photoFile.name}</span> — cliquez Soumettre pour sauvegarder</>
+                        ? <><span style={{ color: '#003d7a', fontWeight: 600 }}>{photoFile.name}</span> — cliquez Soumettre pour sauvegarder</>
                         : "Cliquez sur l'icône caméra pour changer votre photo (JPG/PNG, max 3 MB)"
                       }
                     </p>
@@ -517,16 +513,16 @@ const MonProfil = () => {
                 </div>
 
                 <div className="mp-grid-2">
-                  <div className="mp-field" style={{gridColumn:'1 / -1'}}>
+                  <div className="mp-field" style={{ gridColumn: '1 / -1' }}>
                     <label className="mp-label">Nom complet <span className="req">*</span></label>
-                    <input className={`mp-input${errors.name?' err':''}`} name="name"
-                      value={userForm.name} onChange={handleUserChange} placeholder="ex: Ahmed Ben Salem"/>
+                    <input className={`mp-input${errors.name ? ' err' : ''}`} name="name"
+                      value={userForm.name} onChange={handleUserChange} placeholder="ex: Ahmed Ben Salem" />
                     {errors.name && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.name}</span>}
                   </div>
 
                   <div className="mp-field">
                     <label className="mp-label">Email</label>
-                    <input className="mp-input" value={user.email} disabled/>
+                    <input className="mp-input" value={user.email} disabled />
                   </div>
 
                   <div className="mp-field">
@@ -534,35 +530,35 @@ const MonProfil = () => {
                     <div className="mp-tel-wrap">
                       <span className="mp-tel-prefix">+216</span>
                       <input
-                        className={`mp-input mp-input-tel${phoneEditMode?' last':''}${errors.phoneNumber?' err':''}`}
+                        className={`mp-input mp-input-tel${phoneEditMode ? ' last' : ''}${errors.phoneNumber ? ' err' : ''}`}
                         name="phoneNumber" inputMode="numeric" maxLength={8}
                         value={userForm.phoneNumber} onChange={handlePhoneChange}
                         readOnly={!phoneEditMode}
-                        placeholder={phoneEditMode?'ex: 22333444':'—'}
-                        style={!phoneEditMode?{opacity:.75,cursor:'default',background:'#f1f5f9',borderRadius:'0 .5rem .5rem 0'}:{}}
+                        placeholder={phoneEditMode ? 'ex: 22333444' : '—'}
+                        style={!phoneEditMode ? { opacity: .75, cursor: 'default', background: '#f1f5f9', borderRadius: '0 .5rem .5rem 0' } : {}}
                       />
                       {!phoneEditMode && (
-                        <button type="button" className="mp-tel-edit-btn" onClick={()=>setPhoneEditMode(true)}>
-                          <span className="material-symbols-outlined" style={{fontSize:'.875rem'}}>edit</span>Modifier
+                        <button type="button" className="mp-tel-edit-btn" onClick={() => setPhoneEditMode(true)}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '.875rem' }}>edit</span>Modifier
                         </button>
                       )}
                     </div>
                     {errors.phoneNumber && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.phoneNumber}</span>}
-                    {phoneValid && !errors.phoneNumber && <span className="mp-tel-ok"><span className="material-symbols-outlined" style={{fontSize:'.875rem'}}>check_circle</span>Format valide</span>}
+                    {phoneValid && !errors.phoneNumber && <span className="mp-tel-ok"><span className="material-symbols-outlined" style={{ fontSize: '.875rem' }}>check_circle</span>Format valide</span>}
                     {phoneEditMode && <span className="mp-tel-hint">8 chiffres sans espaces ni tirets</span>}
                   </div>
 
                   <div className="mp-field">
                     <label className="mp-label">Spécialité <span className="req">*</span></label>
-                    <input className={`mp-input${errors.specialite?' err':''}`} name="specialite"
-                      value={profil.specialite} onChange={handleProfilChange} placeholder="ex: Informatique, Finance..."/>
+                    <input className={`mp-input${errors.specialite ? ' err' : ''}`} name="specialite"
+                      value={profil.specialite} onChange={handleProfilChange} placeholder="ex: Informatique, Finance..." />
                     {errors.specialite && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.specialite}</span>}
                   </div>
 
                   <div className="mp-field">
                     <label className="mp-label">Nationalité <span className="req">*</span></label>
-                    <input className={`mp-input${errors.nationalite?' err':''}`} name="nationalite"
-                      value={profil.nationalite} onChange={handleProfilChange} placeholder="ex: Tunisienne"/>
+                    <input className={`mp-input${errors.nationalite ? ' err' : ''}`} name="nationalite"
+                      value={profil.nationalite} onChange={handleProfilChange} placeholder="ex: Tunisienne" />
                     {errors.nationalite && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.nationalite}</span>}
                   </div>
 
@@ -577,11 +573,11 @@ const MonProfil = () => {
 
                   <div className="mp-field">
                     <label className="mp-label">
-                      Numéro {profil.typeDocumentIdentite==='CIN'?'CIN':'Passeport'} <span className="req">*</span>
+                      Numéro {profil.typeDocumentIdentite === 'CIN' ? 'CIN' : 'Passeport'} <span className="req">*</span>
                     </label>
-                    <input className={`mp-input${errors.numeroDocument?' err':''}`} name="numeroDocument"
+                    <input className={`mp-input${errors.numeroDocument ? ' err' : ''}`} name="numeroDocument"
                       value={profil.numeroDocument} onChange={handleProfilChange}
-                      placeholder={profil.typeDocumentIdentite==='CIN'?'ex: 08123456':'ex: AB1234567'}/>
+                      placeholder={profil.typeDocumentIdentite === 'CIN' ? 'ex: 08123456' : 'ex: AB1234567'} />
                     {errors.numeroDocument && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.numeroDocument}</span>}
                   </div>
                 </div>
@@ -595,24 +591,24 @@ const MonProfil = () => {
                 <div className="mp-grid-2">
                   <div className="mp-field">
                     <label className="mp-label">Université / École <span className="req">*</span></label>
-                    <input className={`mp-input${errors.universite?' err':''}`} name="universite"
-                      value={profil.universite} onChange={handleProfilChange} placeholder="ex: ENSI, FST, IHEC..."/>
+                    <input className={`mp-input${errors.universite ? ' err' : ''}`} name="universite"
+                      value={profil.universite} onChange={handleProfilChange} placeholder="ex: ENSI, FST, IHEC..." />
                     {errors.universite && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.universite}</span>}
                   </div>
 
                   <div className="mp-field">
                     <label className="mp-label">Formation actuelle <span className="req">*</span></label>
-                    <input className={`mp-input${errors.cursusActuel?' err':''}`} name="cursusActuel"
-                      value={profil.cursusActuel} onChange={handleProfilChange} placeholder="ex: Master Informatique"/>
+                    <input className={`mp-input${errors.cursusActuel ? ' err' : ''}`} name="cursusActuel"
+                      value={profil.cursusActuel} onChange={handleProfilChange} placeholder="ex: Master Informatique" />
                     {errors.cursusActuel && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.cursusActuel}</span>}
                   </div>
 
                   <div className="mp-field">
                     <label className="mp-label">Niveau d'études <span className="req">*</span></label>
-                    <select className={`mp-select${errors.niveauInstructionActuel?' err':''}`}
+                    <select className={`mp-select${errors.niveauInstructionActuel ? ' err' : ''}`}
                       name="niveauInstructionActuel" value={profil.niveauInstructionActuel} onChange={handleProfilChange}>
                       <option value="">-- Sélectionner --</option>
-                      {NIVEAUX.map(n=><option key={n} value={n}>{n}</option>)}
+                      {NIVEAUX.map(n => <option key={n} value={n}>{n}</option>)}
                     </select>
                     {errors.niveauInstructionActuel && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.niveauInstructionActuel}</span>}
                   </div>
@@ -620,9 +616,9 @@ const MonProfil = () => {
                   <div className="mp-field">
                     <label className="mp-label">Moyenne — année dernière <span className="req">*</span></label>
                     <div className="mp-input-wrap">
-                      <input className={`mp-input${errors.moyDerAnnee?' err':''}`} name="moyDerAnnee"
+                      <input className={`mp-input${errors.moyDerAnnee ? ' err' : ''}`} name="moyDerAnnee"
                         type="number" min="0" max="20" step="0.01"
-                        value={profil.moyDerAnnee} onChange={handleProfilChange} placeholder="0.00"/>
+                        value={profil.moyDerAnnee} onChange={handleProfilChange} placeholder="0.00" />
                       <span className="mp-input-unit">/20</span>
                     </div>
                     {errors.moyDerAnnee && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.moyDerAnnee}</span>}
@@ -631,9 +627,9 @@ const MonProfil = () => {
                   <div className="mp-field">
                     <label className="mp-label">Moyenne — année précédente <span className="req">*</span></label>
                     <div className="mp-input-wrap">
-                      <input className={`mp-input${errors.moyAvantDerAnnee?' err':''}`} name="moyAvantDerAnnee"
+                      <input className={`mp-input${errors.moyAvantDerAnnee ? ' err' : ''}`} name="moyAvantDerAnnee"
                         type="number" min="0" max="20" step="0.01"
-                        value={profil.moyAvantDerAnnee} onChange={handleProfilChange} placeholder="0.00"/>
+                        value={profil.moyAvantDerAnnee} onChange={handleProfilChange} placeholder="0.00" />
                       <span className="mp-input-unit">/20</span>
                     </div>
                     {errors.moyAvantDerAnnee && <span className="mp-field-err"><span className="material-symbols-outlined">error</span>{errors.moyAvantDerAnnee}</span>}
@@ -657,7 +653,7 @@ const MonProfil = () => {
                         <p className="mp-cv-name">{cvDisplayName}</p>
                         <p className="mp-cv-meta">
                           <span className="material-symbols-outlined">check_circle</span>
-                          {cvFile ? formatBytes(cvFile.size)+' · ' : ''}{cvMeta}
+                          {cvFile ? formatBytes(cvFile.size) + ' · ' : ''}{cvMeta}
                         </p>
                       </div>
                       <div className="mp-cv-actions">
@@ -667,8 +663,8 @@ const MonProfil = () => {
                           </button>
                         )}
                         <button type="button" className="mp-cv-view-btn"
-                          onClick={()=>fileInputRef.current?.click()}
-                          style={{borderColor:'#64748b',color:'#64748b'}}>
+                          onClick={() => fileInputRef.current?.click()}
+                          style={{ borderColor: '#64748b', color: '#64748b' }}>
                           <span className="material-symbols-outlined">upload</span>Remplacer
                         </button>
                         <button type="button" className="mp-cv-delete" onClick={removeCv} title="Supprimer">
@@ -677,20 +673,20 @@ const MonProfil = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className={`mp-upload-zone${dragover?' dragover':''}`}
-                      onClick={()=>fileInputRef.current?.click()}
-                      onDragOver={e=>{e.preventDefault();setDragover(true)}}
-                      onDragLeave={()=>setDragover(false)}
-                      onDrop={e=>{e.preventDefault();setDragover(false);handleCvFile(e.dataTransfer.files?.[0])}}>
+                    <div className={`mp-upload-zone${dragover ? ' dragover' : ''}`}
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={e => { e.preventDefault(); setDragover(true) }}
+                      onDragLeave={() => setDragover(false)}
+                      onDrop={e => { e.preventDefault(); setDragover(false); handleCvFile(e.dataTransfer.files?.[0]) }}>
                       <span className="material-symbols-outlined">upload_file</span>
-                      <p>Glissez votre CV ici ou <strong style={{color:'#003d7a'}}>cliquez pour parcourir</strong></p>
+                      <p>Glissez votre CV ici ou <strong style={{ color: '#003d7a' }}>cliquez pour parcourir</strong></p>
                       <span>PDF ou Word · max 20 MB</span>
                     </div>
                   )}
-                  <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" style={{display:'none'}}
-                    onChange={e=>{handleCvFile(e.target.files?.[0]); e.target.value='';}}/>
+                  <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" style={{ display: 'none' }}
+                    onChange={e => { handleCvFile(e.target.files?.[0]); e.target.value = ''; }} />
                   {errors.cv && (
-                    <span className="mp-field-err" style={{marginTop:'.25rem'}}>
+                    <span className="mp-field-err" style={{ marginTop: '.25rem' }}>
                       <span className="material-symbols-outlined">error</span>{errors.cv}
                     </span>
                   )}
@@ -700,8 +696,8 @@ const MonProfil = () => {
               <div className="mp-footer-actions">
                 <button type="submit" className="mp-btn-primary" disabled={saving}>
                   {saving
-                    ? <><span className="material-symbols-outlined mp-spin" style={{fontSize:'1rem'}}>progress_activity</span>Envoi en cours...</>
-                    : <><span className="material-symbols-outlined" style={{fontSize:'1rem'}}>send</span>Soumettre ma candidature</>
+                    ? <><span className="material-symbols-outlined mp-spin" style={{ fontSize: '1rem' }}>progress_activity</span>Envoi en cours...</>
+                    : <><span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>send</span>Soumettre ma candidature</>
                   }
                 </button>
               </div>
