@@ -118,16 +118,19 @@ body {
 `;
 
 const RHSujets = () => {
-  const [sujets, setSujets]         = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState('');
-  const [search, setSearch]         = useState('');
-  const [showForm, setShowForm]     = useState(false);
-  const [editSujet, setEditSujet]   = useState(null);
-  const [quizSujet, setQuizSujet]   = useState(null); // ← sujet dont on veut voir le quiz
-  const [toast, setToast]           = useState(null);
-  const [confirmId, setConfirmId]   = useState(null);
-const [candidatsSujet, setCandidatsSujet] = useState(null);
+  const [sujets, setSujets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editSujet, setEditSujet] = useState(null);
+  const [quizSujet, setQuizSujet] = useState(null); // ← sujet dont on veut voir le quiz
+  const [toast, setToast] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
+  const [candidatsSujet, setCandidatsSujet] = useState(null);
+  const [showOnlyPublished, setShowOnlyPublished] = useState(
+    new URLSearchParams(window.location.search).get('filter') === 'publie'
+  );
 
   // ── GET /api/sujets/all ──────────────────────────────────────────────────
   const fetchSujets = async () => {
@@ -185,11 +188,15 @@ const [candidatsSujet, setCandidatsSujet] = useState(null);
     setTimeout(() => setToast(null), 3500);
   };
 
-  const filtered = sujets.filter(s =>
+  let filtered = sujets.filter(s =>
     s.titre?.toLowerCase().includes(search.toLowerCase()) ||
     s.departement?.toLowerCase().includes(search.toLowerCase()) ||
     s.codeSujet?.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (showOnlyPublished) {
+    filtered = filtered.filter(s => s.statut === 'PUBLIE');
+  }
 
   const handleSuccess = () => {
     setShowForm(false);
@@ -214,16 +221,16 @@ const [candidatsSujet, setCandidatsSujet] = useState(null);
 
   // ── Vue Quiz Editor pour un sujet précis ─────────────────────────────────
   if (quizSujet) {
-  return (
-    <RHQuizEditor
-      sujet={quizSujet}   // ← objet complet au lieu de sujetId + sujetTitre
-      onBack={() => setQuizSujet(null)}
-    />
-  );
-}
-if (candidatsSujet) {
-  return <RHCandidaturesSujet sujet={candidatsSujet} onBack={() => setCandidatsSujet(null)} />;
-}
+    return (
+      <RHQuizEditor
+        sujet={quizSujet}   // ← objet complet au lieu de sujetId + sujetTitre
+        onBack={() => setQuizSujet(null)}
+      />
+    );
+  }
+  if (candidatsSujet) {
+    return <RHCandidaturesSujet sujet={candidatsSujet} onBack={() => setCandidatsSujet(null)} />;
+  }
   // ── Vue liste ─────────────────────────────────────────────────────────────
   return (
     <>
@@ -268,6 +275,14 @@ if (candidatsSujet) {
             />
           </div>
           <div className="rhs-toolbar-btns">
+            <button
+              className="rhs-filter-btn"
+              onClick={() => setShowOnlyPublished(!showOnlyPublished)}
+              style={showOnlyPublished ? { background: '#003d7a', color: '#fff' } : {}}
+            >
+              <span className="material-symbols-outlined">filter_list</span>
+              {showOnlyPublished ? 'Tous les sujets' : 'Sujets Publiés'}
+            </button>
             <button className="rhs-filter-btn" onClick={fetchSujets}>
               <span className="material-symbols-outlined">refresh</span>
               Actualiser
@@ -314,9 +329,9 @@ if (candidatsSujet) {
                   <div className="rhs-card-body">
 
                     <div className="rhs-card-top">
-                      {s.statut === 'PUBLIE'  && <span className="rhs-badge-publie">Publié</span>}
+                      {s.statut === 'PUBLIE' && <span className="rhs-badge-publie">Publié</span>}
                       {s.statut === 'ARCHIVE' && <span className="rhs-badge-archive">Archivé</span>}
-                      {!s.statut             && <div className="rhs-badge-empty" />}
+                      {!s.statut && <div className="rhs-badge-empty" />}
                       <span className="rhs-ref">REF: {s.codeSujet}</span>
                     </div>
 
@@ -352,9 +367,9 @@ if (candidatsSujet) {
                     <div className="rhs-card-footer">
                       {/* Voir candidats */}
                       <button className="rhs-btn-candidats" onClick={() => setCandidatsSujet(s)}>
-  <span className="material-symbols-outlined">group</span>
-  Candidats
-</button>
+                        <span className="material-symbols-outlined">group</span>
+                        Candidats
+                      </button>
 
                       {/* ← Nouveau bouton Voir Quiz */}
                       <button

@@ -96,10 +96,10 @@ const getInit = (name = '') =>
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [stats,   setStats]   = useState(null);
-  const [users,   setUsers]   = useState([]);
+  const [stats, setStats] = useState(null);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast,   setToast]   = useState(null);
+  const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -120,15 +120,15 @@ const AdminDashboard = () => {
   }, []);
 
   const statsCards = stats ? [
-    { label: 'Utilisateurs totaux', value: stats.total    ?? 0, iconClass: 'blue',   icon: 'group',         numClass: '',       sub: 'Tous rôles confondus'   },
-    { label: 'Responsables RH',     value: stats.rh       ?? 0, iconClass: 'purple', icon: 'badge',         numClass: 'purple', sub: 'Comptes RH actifs'      },
-    { label: 'Candidats',           value: stats.candidats?? 0, iconClass: 'blue',   icon: 'school',        numClass: '',       sub: 'Comptes candidats'      },
-    { label: 'Comptes actifs',      value: stats.actifs   ?? 0, iconClass: 'green',  icon: 'check_circle',  numClass: 'green',  sub: 'Accès autorisé'         },
-    { label: 'Comptes bloqués',     value: stats.bloques  ?? 0, iconClass: 'red',    icon: 'block',         numClass: 'red',    sub: 'Accès suspendu'         },
+    { label: 'Utilisateurs totaux', value: stats.total ?? 0, iconClass: 'blue', icon: 'group', numClass: '', sub: 'Tous rôles confondus' },
+    { label: 'Responsables RH', value: stats.rh ?? 0, iconClass: 'purple', icon: 'badge', numClass: 'purple', sub: 'Comptes RH actifs' },
+    { label: 'Candidats', value: stats.candidats ?? 0, iconClass: 'blue', icon: 'school', numClass: '', sub: 'Comptes candidats' },
+    { label: 'Comptes actifs', value: stats.actifs ?? 0, iconClass: 'green', icon: 'check_circle', numClass: 'green', sub: 'Accès autorisé' },
+    { label: 'Comptes bloqués', value: stats.bloques ?? 0, iconClass: 'red', icon: 'block', numClass: 'red', sub: 'Accès suspendu' },
   ] : [];
 
-  const rhUsers   = users.filter(u => u.role === 'ROLE_RH').slice(0, 5);
-  const blocUsers = users.filter(u => u.enabled === false ).slice(0, 5);
+  const rhUsers = users.filter(u => u.role === 'ROLE_RH').slice(0, 5);
+  const blocUsers = users.filter(u => u.enabled === false).slice(0, 5);
 
   return (
     <>
@@ -184,6 +184,10 @@ const AdminDashboard = () => {
               <button className="admd-action-btn ghost"
                 onClick={() => navigate('/admin/utilisateurs')}>
                 <Icon name="manage_accounts" />Gérer les utilisateurs
+              </button>
+              <button className="admd-action-btn ghost"
+                onClick={() => navigate('/admin/sujets?filter=publie')}>
+                <Icon name="work" />Voir les Sujets Publiés
               </button>
             </div>
           </div>
