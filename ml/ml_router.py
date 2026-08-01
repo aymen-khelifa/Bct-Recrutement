@@ -321,14 +321,21 @@ def preload_deepface():
 
 
 # ── ChromaDB ───────────────────────────────────────────────────────────────────
+# ── ChromaDB ───────────────────────────────────────────────────────────────────
+chroma_db_dir = os.environ.get("CHROMA_DB_PATH", str(BASE_DIR / "chroma_cv"))
+os.makedirs(chroma_db_dir, exist_ok=True)
 _chroma = chromadb.PersistentClient(
-    path=CHROMA_DIR,
+    path=chroma_db_dir,
     settings=Settings(anonymized_telemetry=False),
 )
 _col_cv     = _chroma.get_or_create_collection("cvs",              metadata={"hnsw:space": "cosine"})
 _col_fiches = _chroma.get_or_create_collection("fiches_candidats", metadata={"hnsw:space": "cosine"})
-log.info("✅ ChromaDB prêt — cvs=%d chunks, fiches=%d", _col_cv.count(), _col_fiches.count())
-
+log.info("✅ ChromaDB prêt — cvs=%d chunks, fiches=%d | Path: %s", _col_cv.count(), _col_fiches.count(), chroma_db_dir)
+chroma_db_dir = os.environ.get("CHROMA_DB_PATH", str(BASE_DIR / "chroma_cv"))
+# On s'assure que le dossier existe
+os.makedirs(chroma_db_dir, exist_ok=True)
+# On initialise le client sur le dossier sécurisé
+_chroma_client = chromadb.PersistentClient(path=chroma_db_dir)
 # ── Groq (Quiz Generator) — initialisé avec la clé déjà lue ───────────────────
 _groq = None
 if not GROQ_API_KEY:
